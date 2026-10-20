@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>VeloCity 3D - Free Ride Bicycle Adventure</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* UI Overlay */
+    #hud-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .interactive {
+      pointer-events: auto;
+    }
+
+    /* Header Bar */
+    .top-bar {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .stat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 8px 16px;
+      border-radius: 9999px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+
+    .badge-gold {
+      color: #ffd700;
+      border-color: rgba(255, 215, 0, 0.4);
+    }
+
+    .badge-cyan {
+      color: #00e5ff;
+      border-color: rgba(0, 229, 255, 0.4);
+    }
+
+    .action-btn {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .action-btn:hover {
+      background: rgba(0, 229, 255, 0.2);
+      border-color: #00e5ff;
+      transform: translateY(-1px);
+    }
+
+    .action-btn:active {
+      transform: translateY(1px);
+    }
+
+    /* Minimap Widget */
+    .minimap-container {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    #minimap-canvas {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid #00e5ff;
+      box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+    }
+
+    /* Speedometer Gauge Bottom Right */
+    .speedometer {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 16px 24px;
+      text-align: center;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .speed-number {
+      font-size: 48px;
+      font-weight: 800;
+      color: #00e5ff;
+      line-height: 1;
+      text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .speed-unit {
+      font-size: 12px;
+      letter-spacing: 2px;
+      color: #94a3b8;
+      margin-top: 2px;
+      font-weight: 700;
+    }
+
+    .speed-track {
+      width: 100px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .speed-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00e5ff, #ff3366);
+      transition: width 0.05s linear;
+    }
+
+    /* Controls Guide Bottom Left */
+    .controls-hint {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 14px 18px;
+      color: #cbd5e1;
+      font-size: 12px;
+      max-width: 320px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    .controls-hint h4 {
+      color: #fff;
+      font-size: 13px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .kbd {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-weight: bold;
+      color: #38bdf8;
+      font-size: 11px;
+    }
+
+    /* Stunt Trick Announcement */
+    #trick-popup {
+      position: absolute;
+      top: 28%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      color: #ffea00;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-shadow: 0 0 16px rgba(255, 234, 0, 0.8), 2px 2px 0 #000;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .pop-animation {
+      animation: popJump 1.8s ease forwards;
+    }
+
+    @keyframes popJump {
+      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+      20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+      80% { transform: translate(-50%, -60%) scale(1.0); opacity: 1; }
+      100% { transform: translate(-50%, -75%) scale(0.8); opacity: 0; }
+    }
+
+    /* Mobile Onscreen Controls */
+    .touch-controls {
+      display: none;
+      position: absolute;
+      bottom: 24px;
+      left: 20px;
+      z-index: 20;
+    }
+
+    .touch-actions {
+      display: none;
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      z-index: 20;
+    }
+
+    @media (pointer: coarse), (max-width: 768px) {
+      .touch-controls, .touch-actions {
+        display: flex;
+        gap: 12px;
+      }
+      .controls-hint {
+        display: none;
+      }
+    }
+
+    .touch-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.7);
+      border: 2px solid rgba(0, 229, 255, 0.5);
+      color: #fff;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: manipulation;
+    }
+  </style>
+</head>
+<body>
+  <div id="canvas-container"></div>
+
+  <div id="hud-overlay">
+    <!-- Top Bar Stats & Buttons -->
+    <div class="top-bar">
+      <div style="display: flex; flex-wrap: wrap;">
+        <div class="stat-badge badge-gold">
+          <span>⭐ Coins:</span>
+          <span id="coins-value">0</span>
+        </div>
+        <div class="stat-badge badge-cyan">
+          <span>🏆 Score:</span>
+          <span id="score-value">0</span>
+        </div>
+        <div class="stat-badge">
+          <span>📏 Distance:</span>
+          <span id="dist-value">0 m</span>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="interactive" style="display: flex; gap: 8px;">
+        <button id="bell-btn" class="action-btn" title="Ring Bell (B)">🔔 Bell</button>
+        <button id="cam-btn" class="action-btn" title="Switch Camera (C)">🎥 <span id="camera-label">Chase</span></button>
+        <button id="night-btn" class="action-btn" title="Toggle Day/Night (N)">🌙 Night</button>
+        <button id="sound-btn" class="action-btn" title="Toggle Sound">🔊 Sound</button>
+        <button id="reset-btn" class="action-btn" title="Respawn Bike (R)">🔄 Reset</button>
+      </div>
+    </div>
+
+    <!-- Minimap -->
+    <div class="minimap-container">
+      <canvas id="minimap-canvas" width="130" height="130"></canvas>
+    </div>
+
+    <!-- Trick Announcement Popup -->
+    <div id="trick-popup" class="hidden">BIG AIR!</div>
+
+    <!-- Speedometer -->
+    <div class="speedometer">
+      <div id="speed-value" class="speed-number">0</div>
+      <div class="speed-unit">KM / H</div>
+      <div class="speed-track">
+        <div id="speed-bar" class="speed-fill"></div>
+      </div>
+    </div>
+
+    <!-- Keyboard Controls Guide -->
+    <div class="controls-hint">
+      <h4>🚴 Controls</h4>
+      <div class="key-row"><span>Ride / Accelerate</span><span class="kbd">W / ↑</span></div>
+      <div class="key-row"><span>Steer Left / Right</span><span class="kbd">A / D / ← →</span></div>
+      <div class="key-row"><span>Brake / Reverse</span><span class="kbd">S / ↓</span></div>
+      <div class="key-row"><span>Bunny Hop (Jump)</span><span class="kbd">Space</span></div>
+      <div class="key-row"><span>Sprint Boost</span><span class="kbd">Shift</span></div>
+      <div class="key-row"><span>Cycle Camera</span><span class="kbd">C</span></div>
+      <div class="key-row"><span>Ring Bicycle Bell</span><span class="kbd">B</span></div>
+      <div class="key-row"><span>Reset Position</span><span class="kbd">R</span></div>
+    </div>
+
+    <!-- Onscreen Touch Controls for Tablets/Phones -->
+    <div class="touch-controls interactive">
+      <button id="btn-left" class="touch-btn">◀</button>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <button id="btn-up" class="touch-btn">▲</button>
+        <button id="btn-down" class="touch-btn">▼</button>
+      </div>
+      <button id="btn-right" class="touch-btn">▶</button>
+    </div>
+
+    <div class="touch-actions interactive">
+      <button id="btn-jump" class="touch-btn" style="border-color: #ffd700;">🦘</button>
+      <button id="btn-sprint" class="touch-btn" style="border-color: #ff3366;">⚡</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
