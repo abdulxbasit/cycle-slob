@@ -6,6 +6,7 @@ export class GameWorld {
     this.mapSize = 1200;
     this.coins = [];
     this.ramps = [];
+    this.checkpoints = [];
     this.colliders = [];
 
     this.createTerrain();
@@ -14,6 +15,7 @@ export class GameWorld {
     this.createVegetation();
     this.createLightingAndDecorations();
     this.createCollectibles();
+    this.createCheckpoints();
   }
 
   // Smooth undulating procedural landscape height formula
@@ -420,5 +422,109 @@ export class GameWorld {
         }
       }
     }
+  }
+
+  createCheckpoints() {
+    const cpPoints = [
+      new THREE.Vector3(0, 0, 0),         // Gate 0: Start / Finish
+      new THREE.Vector3(60, 0, 30),
+      new THREE.Vector3(120, 0, 100),
+      new THREE.Vector3(140, 0, 220),
+      new THREE.Vector3(80, 0, 320),
+      new THREE.Vector3(-40, 0, 340),
+      new THREE.Vector3(-160, 0, 260),
+      new THREE.Vector3(-220, 0, 120),
+      new THREE.Vector3(-180, 0, -80),
+      new THREE.Vector3(-60, 0, -180),
+      new THREE.Vector3(80, 0, -200),
+      new THREE.Vector3(160, 0, -110),
+    ];
+
+    const archGeo = new THREE.TorusGeometry(5.2, 0.28, 12, 24, Math.PI);
+    archGeo.rotateZ(Math.PI); // Arch over the road
+
+    cpPoints.forEach((pt, idx) => {
+      const groundY = this.getTerrainHeight(pt.x, pt.z);
+      const cpGroup = new THREE.Group();
+      cpGroup.position.set(pt.x, groundY + 0.1, pt.z);
+
+      // Orient arch perpendicular to road track
+      const nextIdx = (idx + 1) % cpPoints.length;
+      const nextPt = cpPoints[nextIdx];
+      const dir = new THREE.Vector3(nextPt.x - pt.x, 0, nextPt.z - pt.z).normalize();
+      const angle = Math.atan2(dir.x, dir.z);
+      cpGroup.rotation.y = angle;
+
+      const isStartFinish = (idx === 0);
+      const activeColor = isStartFinish ? 0x00e676 : 0x00e5ff;
+
+      const ringMat = new THREE.MeshStandardMaterial({
+        color: activeColor,
+        emissive: activeColor,
+        emissiveIntensity: 0.6,
+        roughness: 0.2,
+      });
+
+      const archMesh = new THREE.Mesh(archGeo, ringMat);
+      archMesh.position.y = 0;
+      cpGroup.add(archMesh);
+
+      // Support pillars
+      const pillarGeo = new THREE.CylinderGeometry(0.3, 0.35, 5.5, 8);
+      const pillarMat = new THREE.MeshStandardMaterial({ color: 0x263238, roughness: 0.5 });
+      const pL = new THREE.Mesh(pillarGeo, pillarMat);
+      pL.position.set(-5.2, 2.7, 0);
+      const pR = new THREE.Mesh(pillarGeo, pillarMat);
+      pR.position.set(5.2, 2.7, 0);
+      cpGroup.add(pL, pR);
+
+      // Glowing floating chevron pointing forward
+      const arrowGeo = new THREE.ConeGeometry(0.8, 1.6, 4);
+      arrowGeo.rotateX(-Math.PI / 2);
+      const arrowMat = new THREE.MeshStandardMaterial({
+        color: activeColor,
+        emissive: activeColor,
+        emissiveIntensity: 1.0,
+      });
+      const arrow = new THREE.Mesh(arrowGeo, arrowMat);
+      arrow.position.set(0, 5.0, 0);
+      cpGroup.add(arrow);
+
+      this.checkpoints.push({
+        id: idx,
+        pos: new THREE.Vector3(pt.x, groundY, pt.z),
+        group: cpGroup,
+        archMesh,
+        ringMat,
+        arrow,
+        arrowMat,
+        isStartFinish,
+      });
+
+      this.scene.add(cpGroup);
+    });
+  }
+
+  updateCheckpoints(time, activeIdx) {
+    this.checkpoints.forEach(cp => {
+      const isActive = (cp.id === activeIdx);
+      if (isActive) {
+        const pulse = 0.8 + Math.sin(time * 8) * 0.4;
+        cp.ringMat.emissiveIntensity = pulse;
+        cp.arrowMat.emissiveIntensity = pulse * 1.5;
+        cp.arrow.position.y = 5.0 + Math.sin(time * 6) * 0.3;
+        cp.arrow.visible = true;
+      } else {
+        cp.ringMat.emissiveIntensity = 0.15;
+        cp.arrow.visible = false;
+      }
+    });
+  }
+
+  checkCheckpointHit(playerPos, activeIdx) {
+    const cp = this.checkpoints[activeIdx];
+    if (!cp) return false;
+    const dist = Math.hypot(playerPos.x - cp.pos.x, playerPos.z - cp.pos.z);
+    return dist < 6.5;
   }
 }

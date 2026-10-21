@@ -8,6 +8,11 @@ export class HUD {
     this.trickPopupEl = document.getElementById('trick-popup');
     this.cameraLabelEl = document.getElementById('camera-label');
 
+    // Time Trial Elements
+    this.lapTimeEl = document.getElementById('lap-time');
+    this.cpProgressEl = document.getElementById('cp-progress');
+    this.bestLapEl = document.getElementById('best-lap');
+
     // Minimap Canvas
     this.mapCanvas = document.getElementById('minimap-canvas');
     if (this.mapCanvas) {
@@ -67,8 +72,30 @@ export class HUD {
       this.cameraLabelEl.textContent = cameraMode;
     }
 
-    // 6. Mini-map
-    this.drawMinimap(physicsData, world);
+    // 6. Time Trial
+    if (timeTrialData) {
+      if (this.lapTimeEl) {
+        this.lapTimeEl.textContent = this.formatTime(timeTrialData.lapTime);
+      }
+      if (this.cpProgressEl) {
+        this.cpProgressEl.textContent = `${timeTrialData.activeCheckpoint + 1} / ${timeTrialData.totalCheckpoints}`;
+      }
+      if (this.bestLapEl) {
+        this.bestLapEl.textContent = timeTrialData.bestLap ? this.formatTime(timeTrialData.bestLap) : '--:--.-';
+      }
+    }
+
+    // 7. Mini-map
+    this.drawMinimap(physicsData, world, timeTrialData ? timeTrialData.activeCheckpoint : 0);
+  }
+
+  formatTime(seconds) {
+    if (!seconds || seconds <= 0) return '00:00.0';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const ms = Math.floor((seconds % 1) * 10);
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${pad(mins)}:${pad(secs)}.${ms}`;
   }
 
   drawMinimap(physicsData, world) {
@@ -136,6 +163,24 @@ export class HUD {
       ctx.beginPath();
       ctx.arc(mx, my, 3.5, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Draw Checkpoints
+    if (world.checkpoints) {
+      world.checkpoints.forEach((cp, idx) => {
+        const mx = cx + (cp.pos.x - px) * scale;
+        const my = cy + (cp.pos.z - pz) * scale;
+        const isActive = (idx === activeCpIdx);
+        ctx.fillStyle = isActive ? '#00e676' : 'rgba(0, 229, 255, 0.4)';
+        ctx.beginPath();
+        ctx.arc(mx, my, isActive ? 4.5 : 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        if (isActive) {
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+      });
     }
 
     // Player arrow at center

@@ -38,6 +38,12 @@ class Game {
     this.coinsCollected = 0;
     this.isNight = false;
 
+    // Time Trial State
+    this.activeCheckpoint = 0;
+    this.lapTime = 0;
+    this.lapActive = false;
+    this.bestLap = parseFloat(localStorage.getItem('velocity_best_lap')) || null;
+
     // Lighting
     this.setupLighting();
 
@@ -287,8 +293,38 @@ class Game {
     // 3. Update Audio
     sound.update(physicsData.forwardSpeed, physicsData.isGrounded, physicsData.isPedaling, physicsData.isSkidding);
 
-    // 4. Update World (Coin animations)
+    // 4. Update World (Coin animations & Checkpoints)
     this.world.update(elapsedTime);
+
+    // Time Trial Progress
+    if (this.lapActive) {
+      this.lapTime += dt;
+    }
+
+    if (this.world.checkCheckpointHit(this.physics.position, this.activeCheckpoint)) {
+      sound.playCoin();
+      if (this.activeCheckpoint === 0) {
+        if (this.lapActive) {
+          // Completed lap
+          const isRecord = (!this.bestLap || this.lapTime < this.bestLap);
+          if (isRecord) {
+            this.bestLap = this.lapTime;
+            localStorage.setItem('velocity_best_lap', this.bestLap.toFixed(2));
+            physicsData.trickName = `🏁 RECORD! ${this.hud.formatTime(this.bestLap)}`;
+          } else {
+            physicsData.trickName = `🏁 LAP: ${this.hud.formatTime(this.lapTime)}`;
+          }
+          this.physics.stuntScore += 1000;
+        }
+        this.lapTime = 0;
+        this.lapActive = true;
+        this.activeCheckpoint = 1;
+      } else {
+        this.activeCheckpoint = (this.activeCheckpoint + 1) % this.world.checkpoints.length;
+        this.physics.stuntScore += 100;
+      }
+    }
+    this.world.updateCheckpoints(elapsedTime, this.activeCheckpoint);
 
     // Check Collectibles
     this.world.checkCoinCollection(this.physics.position, () => {
@@ -306,7 +342,18 @@ class Game {
 
     // 6. Camera & HUD
     this.updateCamera();
-    this.hud.update(physicsData, this.coinsCollected, this.cameraModes[this.cameraIndex], this.world);
+    this.hud.update(
+      physicsData,
+      this.coinsCollected,
+      this.cameraModes[this.cameraIndex],
+      this.world,
+      {
+        lapTime: this.lapTime,
+        activeCheckpoint: this.activeCheckpoint,
+        totalCheckpoints: this.world.checkpoints.length,
+        bestLap: this.bestLap
+      }
+    );
 
     // 7. Render
     this.renderer.render(this.scene, this.camera);
