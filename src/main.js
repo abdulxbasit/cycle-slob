@@ -320,6 +320,12 @@ class Game {
 
   resetBike() {
     this.physics.reset();
+    this.lapActive = false;
+    this.lapTime = 0;
+    this.activeCheckpoint = 0;
+    if (this.ghost) {
+      this.ghost.onLapStart();
+    }
   }
 
   setupWindowResize() {
@@ -389,7 +395,7 @@ class Game {
       const time = this.clock.getElapsedTime() * 0.3;
       this.camera.position.set(pos.x + Math.sin(time) * 10, pos.y + 6, pos.z + Math.cos(time) * 10);
       this.camera.lookAt(pos.x, pos.y + 0.8, pos.z);
-    } else if (mode === 'Ghost Cam' && this.ghost && this.ghost.ghostPosition) {
+    } else if (mode === 'Ghost Cam' && this.ghost && this.ghost.ghostPosition && this.ghost.enabled) {
       // Spectator camera locked onto the Holographic Ghost Cyclist
       const gPos = this.ghost.ghostPosition;
       const gHeading = this.ghost.ghostHeading;
@@ -401,6 +407,15 @@ class Game {
 
       this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.2);
       this.camera.lookAt(new THREE.Vector3(gPos.x + Math.sin(gHeading) * 2.0, gPos.y + 0.95, gPos.z + Math.cos(gHeading) * 2.0));
+    } else if (mode === 'Ghost Cam') {
+      // Fallback if ghost disabled: standard chase view
+      const dist = 4.6;
+      const height = 2.2;
+      const targetCamX = pos.x - Math.sin(heading) * dist;
+      const targetCamZ = pos.z - Math.cos(heading) * dist;
+      const targetCamY = pos.y + height;
+      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.14);
+      this.camera.lookAt(new THREE.Vector3(pos.x + Math.sin(heading) * 2.5, pos.y + 0.85, pos.z + Math.cos(heading) * 2.5));
     }
   }
 

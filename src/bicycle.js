@@ -1682,8 +1682,8 @@ export class GhostBicycle extends Bicycle {
         } else {
           const t = p.life / p.maxLife;
           const currentScale = p.scale * (1 - t * 0.8);
+          p.pos.y += dt * 0.45;
           dummy.position.copy(p.pos);
-          dummy.position.y += dt * 0.4;
           dummy.scale.set(currentScale, currentScale * 1.5, currentScale);
           dummy.updateMatrix();
           this.trailMesh.setMatrixAt(i, dummy.matrix);

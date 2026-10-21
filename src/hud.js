@@ -127,6 +127,8 @@ export class HUD {
         ghostDeltaEl.textContent = this.formatTime(ghostData.bestLapTime);
         ghostBadgeEl.style.borderColor = 'var(--ww-cyan)';
         ghostBadgeEl.style.color = 'var(--ww-cyan)';
+      } else {
+        ghostBadgeEl.classList.add('hidden');
       }
     }
 
