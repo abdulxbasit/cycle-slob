@@ -27,7 +27,7 @@ On each scheduled run:
 
 ### Phase 2: World & Environment
 - [x] Add more terrain props: bridges across ravines, fences, tunnels, and low-poly houses/village (Completed TASK-005)
-- [ ] Add dynamic weather system (rain particles with wet ground reflections, fog)
+- [x] Add dynamic weather system (rain particles with wet ground reflections, fog) (Completed TASK-007)
 - [ ] Add interactive physics objects: traffic cones, cardboard boxes, and hurdles that can be knocked over
 - [ ] Add animated NPC pedestrians or fellow cyclists cruising on designated paths
 

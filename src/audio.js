@@ -92,6 +92,23 @@ class SoundController {
     this.skidFilter.connect(this.skidGain);
     this.skidGain.connect(this.ctx.destination);
     skidSource.start(0);
+
+    // 4. Rain ambient sound
+    const rainSource = this.ctx.createBufferSource();
+    rainSource.buffer = noiseBuffer;
+    rainSource.loop = true;
+
+    this.rainFilter = this.ctx.createBiquadFilter();
+    this.rainFilter.type = 'lowpass';
+    this.rainFilter.frequency.value = 1200;
+
+    this.rainGain = this.ctx.createGain();
+    this.rainGain.gain.value = 0;
+
+    rainSource.connect(this.rainFilter);
+    this.rainFilter.connect(this.rainGain);
+    this.rainGain.connect(this.ctx.destination);
+    rainSource.start(0);
   }
 
   update(speed, isGrounded, isPedaling, isSkidding = false) {
@@ -275,6 +292,37 @@ class SoundController {
 
     osc.start(now);
     osc.stop(now + 0.95);
+  }
+
+  setRainVolume(vol) {
+    if (!this.ctx || !this.rainGain) return;
+    this.rainGain.gain.setTargetAtTime(this.muted ? 0 : vol, this.ctx.currentTime, 0.4);
+  }
+
+  playThunder() {
+    this.init();
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(55, now);
+    osc.frequency.exponentialRampToValueAtTime(24, now + 1.8);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(140, now);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.1);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 2.2);
   }
 
   toggleMute() {

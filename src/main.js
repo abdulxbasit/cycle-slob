@@ -5,6 +5,7 @@ import { BikePhysics } from './physics.js';
 import { sound } from './audio.js';
 import { HUD } from './hud.js';
 import { ParticleAndSkidSystem } from './particles.js';
+import { WeatherSystem } from './weather.js';
 
 class Game {
   constructor() {
@@ -33,6 +34,7 @@ class Game {
     this.bicycle = new Bicycle(this.scene);
     this.physics = new BikePhysics(this.world);
     this.particles = new ParticleAndSkidSystem(this.scene, this.world);
+    this.weather = new WeatherSystem(this.scene);
     this.hud = new HUD();
 
     this.coinsCollected = 0;
@@ -110,6 +112,24 @@ class Game {
     }
   }
 
+  toggleWeather() {
+    const mode = this.weather.cycleWeather(this.scene, this.dirLight, this.hemiLight);
+    const btn = document.getElementById('weather-btn');
+    if (btn) {
+      if (mode === 'Clear') {
+        btn.textContent = '☀️ Clear';
+        sound.setRainVolume(0);
+      } else if (mode === 'Rain') {
+        btn.textContent = '🌧️ Rain';
+        sound.setRainVolume(0.25);
+        sound.playThunder();
+      } else if (mode === 'Foggy') {
+        btn.textContent = '🌫️ Fog';
+        sound.setRainVolume(0);
+      }
+    }
+  }
+
   setupInputs() {
     const keyMap = {
       KeyW: 'forward',
@@ -146,6 +166,9 @@ class Game {
       }
       if (e.code === 'KeyN') {
         this.toggleDayNight();
+      }
+      if (e.code === 'KeyT') {
+        this.toggleWeather();
       }
       if (e.code === 'KeyG') {
         const modal = document.getElementById('garage-modal');
@@ -205,6 +228,11 @@ class Game {
     const nightBtn = document.getElementById('night-btn');
     if (nightBtn) {
       nightBtn.addEventListener('click', () => this.toggleDayNight());
+    }
+
+    const weatherBtn = document.getElementById('weather-btn');
+    if (weatherBtn) {
+      weatherBtn.addEventListener('click', () => this.toggleWeather());
     }
 
     const resetBtn = document.getElementById('reset-btn');
@@ -350,6 +378,7 @@ class Game {
 
     // 4. Update World (Coin animations & Checkpoints)
     this.world.update(elapsedTime);
+    this.weather.update(dt, this.physics.position);
 
     // Time Trial Progress
     if (this.lapActive) {

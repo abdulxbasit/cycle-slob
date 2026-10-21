@@ -51,8 +51,32 @@
     "id": "TASK-007",
     "title": "Dynamic Weather and Rain FX",
     "description": "Add rain particles, darkening storm clouds, wet asphalt shimmer, and thunder audio synthesis.",
-    "status": "pending",
+    "status": "completed",
     "targetFiles": ["src/world.js", "src/audio.js", "src/main.js"],
     "priority": 7
+  },
+  {
+    "id": "TASK-008",
+    "title": "Bicycle Chassis Selector (BMX, MTB, Aero Road)",
+    "description": "Add distinct bicycle chassis archetypes with variable top speeds, turning radius, jump heights, and gear ratios.",
+    "status": "pending",
+    "targetFiles": ["src/bicycle.js", "src/physics.js", "index.html"],
+    "priority": 8
+  },
+  {
+    "id": "TASK-009",
+    "title": "Dynamic Physics Obstacles & Traffic Cones",
+    "description": "Add knockable traffic cones, roadblock hurdles, and bowling pins that react dynamically to bicycle impacts.",
+    "status": "pending",
+    "targetFiles": ["src/world.js", "src/physics.js"],
+    "priority": 9
+  },
+  {
+    "id": "TASK-010",
+    "title": "Procedural Synthwave Chiptune BGM Synthesizer",
+    "description": "Add a procedural Web Audio API synthwave/chiptune music player with bassline, arpeggios, and drums.",
+    "status": "pending",
+    "targetFiles": ["src/audio.js", "index.html"],
+    "priority": 10
   }
 ]
