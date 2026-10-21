@@ -326,4 +326,20 @@ export class Bicycle {
   setLightIntensity(intensity) {
     this.spotLight.intensity = intensity;
   }
+
+  setFrameColor(color) {
+    this.frameMat.color.set(color);
+  }
+
+  setAccentColor(color) {
+    this.accentMat.color.set(color);
+  }
+
+  setHelmetColor(color) {
+    this.helmetMat.color.set(color);
+  }
+
+  setJerseyColor(color) {
+    this.riderMat.color.set(color);
+  }
 }

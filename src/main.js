@@ -147,6 +147,10 @@ class Game {
       if (e.code === 'KeyN') {
         this.toggleDayNight();
       }
+      if (e.code === 'KeyG') {
+        const modal = document.getElementById('garage-modal');
+        if (modal) modal.classList.toggle('hidden');
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -207,6 +211,53 @@ class Game {
     if (resetBtn) {
       resetBtn.addEventListener('click', () => this.resetBike());
     }
+
+    this.setupGarage();
+  }
+
+  setupGarage() {
+    const modal = document.getElementById('garage-modal');
+    const openBtn = document.getElementById('garage-btn');
+    const closeBtn = document.getElementById('garage-close');
+
+    const toggleGarage = () => {
+      if (modal) modal.classList.toggle('hidden');
+    };
+
+    if (openBtn) openBtn.addEventListener('click', toggleGarage);
+    if (closeBtn) closeBtn.addEventListener('click', toggleGarage);
+
+    // Load saved colors
+    const savedFrame = localStorage.getItem('velocity_paint_frame');
+    if (savedFrame) this.bicycle.setFrameColor(savedFrame);
+    const savedHelmet = localStorage.getItem('velocity_paint_helmet');
+    if (savedHelmet) this.bicycle.setHelmetColor(savedHelmet);
+    const savedJersey = localStorage.getItem('velocity_paint_jersey');
+    if (savedJersey) this.bicycle.setJerseyColor(savedJersey);
+
+    // Swatches
+    document.querySelectorAll('.swatch').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type');
+        const color = btn.getAttribute('data-color');
+
+        if (btn.parentElement) {
+          btn.parentElement.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+          btn.classList.add('selected');
+        }
+
+        if (type === 'frame') {
+          this.bicycle.setFrameColor(color);
+          localStorage.setItem('velocity_paint_frame', color);
+        } else if (type === 'helmet') {
+          this.bicycle.setHelmetColor(color);
+          localStorage.setItem('velocity_paint_helmet', color);
+        } else if (type === 'jersey') {
+          this.bicycle.setJerseyColor(color);
+          localStorage.setItem('velocity_paint_jersey', color);
+        }
+      });
+    });
   }
 
   cycleCamera() {

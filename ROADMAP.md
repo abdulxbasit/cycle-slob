@@ -32,7 +32,7 @@ On each scheduled run:
 - [ ] Add animated NPC pedestrians or fellow cyclists cruising on designated paths
 
 ### Phase 3: Customization & Progression
-- [ ] Bicycle customization modal (choose frame colors: neon pink, electric blue, stealth black, golden yellow)
+- [x] Bicycle customization modal (choose frame colors: neon pink, electric blue, stealth black, golden yellow) (Completed TASK-006)
 - [ ] Unlockable bike models (Mountain Bike, BMX, Racing Road Bike) with different physics stats
 - [ ] Collectible shop where collected star coins can be spent on helmet skins and bell sound variants
 - [ ] Speed run ghost rider recording best lap replay
