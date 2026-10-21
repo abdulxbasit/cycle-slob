@@ -191,6 +191,10 @@ class Game {
         const modal = document.getElementById('garage-modal');
         if (modal) modal.classList.toggle('hidden');
       }
+      if (e.code === 'KeyM') {
+        const track = sound.cycleMusicTrack();
+        this.updateMusicUI(track);
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -229,11 +233,20 @@ class Game {
       bellBtn.addEventListener('click', () => sound.ringBell());
     }
 
+    const musicBtn = document.getElementById('music-btn');
+    if (musicBtn) {
+      musicBtn.addEventListener('click', () => {
+        const track = sound.cycleMusicTrack();
+        this.updateMusicUI(track);
+      });
+    }
+
     const soundBtn = document.getElementById('sound-btn');
     if (soundBtn) {
       soundBtn.addEventListener('click', () => {
         const muted = sound.toggleMute();
         soundBtn.textContent = muted ? '🔇 Unmute' : '🔊 Sound';
+        this.updateMusicUI(sound.getMusicTrackInfo());
       });
     }
 
@@ -258,6 +271,21 @@ class Game {
     }
 
     this.hud.setupBikeShop(this.bicycle, this.physics, sound);
+    this.updateMusicUI(sound.getMusicTrackInfo());
+  }
+
+  updateMusicUI(trackInfo) {
+    const musicBtn = document.getElementById('music-btn');
+    if (!musicBtn) return;
+    if (!trackInfo || !trackInfo.active || sound.muted) {
+      musicBtn.textContent = sound.muted ? '🔇 MUTE' : '🔇 BGM: OFF';
+      musicBtn.classList.remove('ww-btn-highlight');
+      musicBtn.title = 'Synthwave BGM Music Player (M) - Currently Off';
+    } else {
+      musicBtn.textContent = `🎵 ${trackInfo.name}`;
+      musicBtn.classList.add('ww-btn-highlight');
+      musicBtn.title = `Synthwave BGM Music Player (M) - ${trackInfo.description || trackInfo.name}`;
+    }
   }
 
   cycleCamera() {
@@ -362,7 +390,7 @@ class Game {
     this.particles.update(dt, rearWheelPos, this.physics.velocity, physicsData.isSkidding, physicsData.isGrounded);
 
     // 3. Update Audio
-    sound.update(physicsData.forwardSpeed, physicsData.isGrounded, physicsData.isPedaling, physicsData.isSkidding);
+    sound.update(physicsData.forwardSpeed, physicsData.isGrounded, physicsData.isPedaling, physicsData.isSkidding, physicsData.isBoosting);
 
     // 4. Update World (Coin animations & Checkpoints)
     this.world.update(elapsedTime);

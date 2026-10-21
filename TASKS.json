@@ -83,8 +83,8 @@
     "id": "TASK-011",
     "title": "Procedural Synthwave Chiptune BGM Synthesizer",
     "description": "Add a procedural Web Audio API synthwave/chiptune music player with bassline, arpeggios, and drums.",
-    "status": "pending",
-    "targetFiles": ["src/audio.js", "index.html"],
+    "status": "completed",
+    "targetFiles": ["src/audio.js", "index.html", "src/main.js"],
     "priority": 11
   },
   {
@@ -94,5 +94,21 @@
     "status": "pending",
     "targetFiles": ["src/bicycle.js", "src/world.js", "src/main.js"],
     "priority": 12
+  },
+  {
+    "id": "TASK-013",
+    "title": "Post-Processing Bloom & Speed Vignette",
+    "description": "Add subtle screen vignette and bloom effects for neon signs, headlights, and boost pads using Three.js EffectComposer or procedural shaders.",
+    "status": "pending",
+    "targetFiles": ["src/main.js", "package.json"],
+    "priority": 13
+  },
+  {
+    "id": "TASK-014",
+    "title": "Autonomous AI NPC Cyclists",
+    "description": "Spawn fellow procedural cyclist bots cruising along the road circuit with steering AI and collision avoidance.",
+    "status": "pending",
+    "targetFiles": ["src/bicycle.js", "src/world.js", "src/main.js"],
+    "priority": 14
   }
 ]
