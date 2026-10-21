@@ -411,6 +411,14 @@ class Game {
     }
     this.world.updateBoostPads(elapsedTime);
 
+    // Check Dynamic Obstacle Collisions (Cones, Roadblocks, Bowling Pins)
+    this.world.updateObstacles(dt);
+    this.world.checkObstacleCollisions(this.physics.position, this.physics.velocity, (type, points, label) => {
+      sound.playSmash(type);
+      this.physics.stuntScore += points;
+      physicsData.trickName = label;
+    });
+
     // 5. Directional Light follow player for continuous dynamic shadows
     this.dirLight.position.set(
       this.physics.position.x + 80,

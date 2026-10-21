@@ -10,6 +10,7 @@ export class GameWorld {
     this.boostPads = [];
     this.clouds = [];
     this.colliders = [];
+    this.dynamicObstacles = [];
 
     this.createTerrain();
     this.createRoadNetwork();
@@ -21,6 +22,7 @@ export class GameWorld {
     this.createBoostPads();
     this.createVillageAndTunnel();
     this.createClouds();
+    this.createDynamicObstacles();
   }
 
   // Smooth undulating procedural landscape height formula
@@ -847,6 +849,252 @@ export class GameWorld {
 
       this.clouds.push(cloud);
       this.scene.add(cloud);
+    }
+  }
+
+  // --- Dynamic Physics Obstacles (TASK-010) ---
+  createDynamicObstacles() {
+    this.dynamicObstacles = [];
+
+    const coneOrangeMat = new THREE.MeshStandardMaterial({
+      color: 0xff4d00,
+      roughness: 0.35,
+    });
+    const coneWhiteMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.3,
+    });
+    const coneBaseMat = new THREE.MeshStandardMaterial({
+      color: 0x181a20,
+      roughness: 0.9,
+    });
+
+    const createCone = (x, z) => {
+      const group = new THREE.Group();
+      const groundY = this.getTerrainHeight(x, z);
+
+      // Base plate
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.04, 0.36), coneBaseMat);
+      base.position.y = 0.02;
+      base.castShadow = true;
+      group.add(base);
+
+      // Main cone
+      const cone = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.13, 0.46, 12), coneOrangeMat);
+      cone.position.y = 0.25;
+      cone.castShadow = true;
+      group.add(cone);
+
+      // White reflective band
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.095, 0.12, 12), coneWhiteMat);
+      band.position.y = 0.26;
+      group.add(band);
+
+      group.position.set(x, groundY, z);
+      this.scene.add(group);
+
+      this.dynamicObstacles.push({
+        type: 'cone',
+        mesh: group,
+        pos: group.position,
+        velocity: new THREE.Vector3(0, 0, 0),
+        angularVelocity: new THREE.Vector3(0, 0, 0),
+        radius: 0.42,
+        points: 50,
+        label: '🚧 CONE SMASH! +50',
+        knocked: false,
+      });
+    };
+
+    // Slalom Cones on road curves
+    const conePositions = [
+      { x: -14, z: 24 }, { x: -18, z: 30 }, { x: -24, z: 36 }, { x: -30, z: 42 },
+      { x: 32, z: -30 }, { x: 35, z: -36 }, { x: 38, z: -42 },
+      { x: -48, z: 78 }, { x: -52, z: 84 }, { x: -56, z: 90 },
+      { x: 12, z: -18 }, { x: 16, z: -22 }
+    ];
+    conePositions.forEach(p => createCone(p.x, p.z));
+
+    // Roadblock Hurdles (Sawhorse barricades)
+    const hazardMat = new THREE.MeshStandardMaterial({
+      color: 0xffea00,
+      roughness: 0.4,
+    });
+    const woodLegMat = new THREE.MeshStandardMaterial({
+      color: 0x222634,
+      roughness: 0.7,
+    });
+
+    const createHurdle = (x, z, rotY = 0) => {
+      const group = new THREE.Group();
+      const groundY = this.getTerrainHeight(x, z);
+
+      // Crossbar
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, 0.07), hazardMat);
+      bar.position.y = 0.72;
+      bar.castShadow = true;
+      group.add(bar);
+
+      // Black stripes on crossbar
+      [-0.45, -0.15, 0.15, 0.45].forEach(sX => {
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.19, 0.075), coneBaseMat);
+        stripe.position.set(sX, 0.72, 0);
+        group.add(stripe);
+      });
+
+      // A-frame Legs
+      [-0.65, 0.65].forEach(sideX => {
+        const leg1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.82, 0.06), woodLegMat);
+        leg1.position.set(sideX, 0.40, 0.18);
+        leg1.rotation.x = 0.35;
+        leg1.castShadow = true;
+        group.add(leg1);
+
+        const leg2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.82, 0.06), woodLegMat);
+        leg2.position.set(sideX, 0.40, -0.18);
+        leg2.rotation.x = -0.35;
+        leg2.castShadow = true;
+        group.add(leg2);
+      });
+
+      group.position.set(x, groundY, z);
+      group.rotation.y = rotY;
+      this.scene.add(group);
+
+      this.dynamicObstacles.push({
+        type: 'wood',
+        mesh: group,
+        pos: group.position,
+        velocity: new THREE.Vector3(0, 0, 0),
+        angularVelocity: new THREE.Vector3(0, 0, 0),
+        radius: 0.85,
+        points: 150,
+        label: '🪵 BARRICADE BUSTER! +150',
+        knocked: false,
+      });
+    };
+
+    createHurdle(8, 48, 0.2);
+    createHurdle(-38, -62, -0.4);
+    createHurdle(58, 72, 0.8);
+    createHurdle(-72, 34, 0.5);
+
+    // 10-Pin Bowling Triangle Formation at Stunt Landing
+    const pinWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.25 });
+    const pinRedMat = new THREE.MeshStandardMaterial({ color: 0xff1744, roughness: 0.3 });
+
+    const createPin = (x, z) => {
+      const group = new THREE.Group();
+      const groundY = this.getTerrainHeight(x, z);
+
+      // Pin Belly
+      const belly = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.24, 10), pinWhiteMat);
+      belly.position.y = 0.12;
+      belly.castShadow = true;
+      group.add(belly);
+
+      // Pin Neck
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.07, 0.12, 10), pinWhiteMat);
+      neck.position.y = 0.30;
+      group.add(neck);
+
+      // Red Stripe
+      const redBand = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.03, 10), pinRedMat);
+      redBand.position.y = 0.31;
+      group.add(redBand);
+
+      // Pin Head
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.052, 8, 8), pinWhiteMat);
+      head.position.y = 0.40;
+      head.castShadow = true;
+      group.add(head);
+
+      group.position.set(x, groundY, z);
+      this.scene.add(group);
+
+      this.dynamicObstacles.push({
+        type: 'pins',
+        mesh: group,
+        pos: group.position,
+        velocity: new THREE.Vector3(0, 0, 0),
+        angularVelocity: new THREE.Vector3(0, 0, 0),
+        radius: 0.35,
+        points: 500,
+        label: '🎳 STRIKE! +500',
+        knocked: false,
+      });
+    };
+
+    // Standard 10-pin triangle layout
+    const alleyOriginX = 0;
+    const alleyOriginZ = 120;
+    const pinSpacing = 0.55;
+
+    // Row 1 (1 pin)
+    createPin(alleyOriginX, alleyOriginZ);
+    // Row 2 (2 pins)
+    createPin(alleyOriginX - pinSpacing * 0.5, alleyOriginZ + pinSpacing * 0.86);
+    createPin(alleyOriginX + pinSpacing * 0.5, alleyOriginZ + pinSpacing * 0.86);
+    // Row 3 (3 pins)
+    createPin(alleyOriginX - pinSpacing, alleyOriginZ + pinSpacing * 1.72);
+    createPin(alleyOriginX, alleyOriginZ + pinSpacing * 1.72);
+    createPin(alleyOriginX + pinSpacing, alleyOriginZ + pinSpacing * 1.72);
+    // Row 4 (4 pins)
+    createPin(alleyOriginX - pinSpacing * 1.5, alleyOriginZ + pinSpacing * 2.58);
+    createPin(alleyOriginX - pinSpacing * 0.5, alleyOriginZ + pinSpacing * 2.58);
+    createPin(alleyOriginX + pinSpacing * 0.5, alleyOriginZ + pinSpacing * 2.58);
+    createPin(alleyOriginX + pinSpacing * 1.5, alleyOriginZ + pinSpacing * 2.58);
+  }
+
+  checkObstacleCollisions(playerPos, playerVel, onSmash) {
+    const pSpeed = playerVel.length();
+    for (const obs of this.dynamicObstacles) {
+      if (!obs.knocked) {
+        const dist = Math.hypot(playerPos.x - obs.pos.x, playerPos.z - obs.pos.z);
+        if (dist < obs.radius + 0.65) {
+          obs.knocked = true;
+          // Launch obstacle with impulse
+          const forwardFactor = Math.max(2.0, pSpeed * 1.25);
+          obs.velocity.set(
+            playerVel.x * 1.2 + (Math.random() - 0.5) * 3.5,
+            Math.max(3.8, forwardFactor * 0.4),
+            playerVel.z * 1.2 + (Math.random() - 0.5) * 3.5
+          );
+          obs.angularVelocity.set(
+            (Math.random() - 0.5) * 16,
+            (Math.random() - 0.5) * 16,
+            (Math.random() - 0.5) * 16
+          );
+          if (onSmash) {
+            onSmash(obs.type, obs.points, obs.label);
+          }
+        }
+      }
+    }
+  }
+
+  updateObstacles(dt) {
+    for (const obs of this.dynamicObstacles) {
+      if (obs.knocked) {
+        // Gravity
+        obs.velocity.y -= 22.0 * dt;
+        obs.pos.addScaledVector(obs.velocity, dt);
+
+        // Terrain collision bounce
+        const groundY = this.getTerrainHeight(obs.pos.x, obs.pos.z);
+        if (obs.pos.y <= groundY) {
+          obs.pos.y = groundY;
+          obs.velocity.y = -obs.velocity.y * 0.45; // Bounce restitution
+          obs.velocity.x *= 0.75; // Ground friction
+          obs.velocity.z *= 0.75;
+          obs.angularVelocity.multiplyScalar(0.7);
+        }
+
+        // Tumbling rotation
+        obs.mesh.rotation.x += obs.angularVelocity.x * dt;
+        obs.mesh.rotation.y += obs.angularVelocity.y * dt;
+        obs.mesh.rotation.z += obs.angularVelocity.z * dt;
+      }
     }
   }
 }

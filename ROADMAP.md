@@ -28,12 +28,13 @@ On each scheduled run:
 ### Phase 2: World & Environment
 - [x] Add more terrain props: bridges across ravines, fences, tunnels, and low-poly houses/village (Completed TASK-005)
 - [x] Add dynamic weather system (rain particles with wet ground reflections, fog) (Completed TASK-007)
-- [ ] Add interactive physics objects: traffic cones, cardboard boxes, and hurdles that can be knocked over
+- [x] Add interactive physics objects: traffic cones, sawhorse roadblocks, and 10 bowling pins that fly on impact with smash sound FX (Completed TASK-010)
 - [ ] Add animated NPC pedestrians or fellow cyclists cruising on designated paths
 
 ### Phase 3: Customization & Progression
 - [x] Bicycle customization modal (choose frame colors: neon pink, electric blue, stealth black, golden yellow) (Completed TASK-006)
-- [ ] Unlockable bike models (Mountain Bike, BMX, Racing Road Bike) with different physics stats
+- [x] Modular Frankenstein bike builder with 6 slots (Frame, Fork, Wheels, Bars, Drivetrain, Saddle) affecting Power, Aero, Handling, and Grip (Completed TASK-008)
+- [x] Wheel World style arcade sports UI with Chakra Petch/Teko typography, dynamic speed streaks, and 360 showcase garage (Completed TASK-009)
 - [ ] Collectible shop where collected star coins can be spent on helmet skins and bell sound variants
 - [ ] Speed run ghost rider recording best lap replay
 

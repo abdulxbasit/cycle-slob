@@ -74,9 +74,9 @@
   {
     "id": "TASK-010",
     "title": "Dynamic Physics Obstacles & Traffic Cones",
-    "description": "Add knockable traffic cones, roadblock hurdles, and bowling pins that react dynamically to bicycle impacts.",
-    "status": "pending",
-    "targetFiles": ["src/world.js", "src/physics.js"],
+    "description": "Add knockable traffic cones, roadblock hurdles, and bowling pins that react dynamically to bicycle impacts with bounce, tumble physics, and smash audio.",
+    "status": "completed",
+    "targetFiles": ["src/world.js", "src/main.js", "src/audio.js"],
     "priority": 10
   },
   {
@@ -86,5 +86,13 @@
     "status": "pending",
     "targetFiles": ["src/audio.js", "index.html"],
     "priority": 11
+  },
+  {
+    "id": "TASK-012",
+    "title": "Ghost Bike Record Lap Racing",
+    "description": "Record player's best lap replay path and spawn a transparent glowing neon ghost cyclist to race against.",
+    "status": "pending",
+    "targetFiles": ["src/bicycle.js", "src/world.js", "src/main.js"],
+    "priority": 12
   }
 ]
