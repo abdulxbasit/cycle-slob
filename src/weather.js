@@ -6,32 +6,41 @@ export class WeatherSystem {
     this.modes = ['Clear', 'Rain', 'Foggy'];
     this.currentModeIndex = 0;
 
-    // Rain Particle System
-    this.rainCount = 1800;
+    // Rain Particle System using realistic streak lines
+    this.rainCount = 1200;
     this.rainGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(this.rainCount * 3);
-    const velocities = new Float32Array(this.rainCount);
+    const positions = new Float32Array(this.rainCount * 6); // 2 vertices per streak
+    this.velocities = new Float32Array(this.rainCount);
 
     this.rainRadius = 45;
     for (let i = 0; i < this.rainCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * this.rainRadius * 2;
-      positions[i * 3 + 1] = Math.random() * 30;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * this.rainRadius * 2;
-      velocities[i] = 22 + Math.random() * 10;
+      const rx = (Math.random() - 0.5) * this.rainRadius * 2;
+      const ry = Math.random() * 32;
+      const rz = (Math.random() - 0.5) * this.rainRadius * 2;
+
+      // Top vertex
+      positions[i * 6] = rx;
+      positions[i * 6 + 1] = ry;
+      positions[i * 6 + 2] = rz;
+
+      // Bottom vertex of streak
+      positions[i * 6 + 3] = rx - 0.15;
+      positions[i * 6 + 4] = ry - 1.2;
+      positions[i * 6 + 5] = rz - 0.15;
+
+      this.velocities[i] = 28 + Math.random() * 12;
     }
 
     this.rainGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    this.velocities = velocities;
 
-    const rainMat = new THREE.PointsMaterial({
+    const rainMat = new THREE.LineBasicMaterial({
       color: 0x90caf9,
-      size: 0.16,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.65,
       depthWrite: false,
     });
 
-    this.rainPoints = new THREE.Points(this.rainGeo, rainMat);
+    this.rainPoints = new THREE.LineSegments(this.rainGeo, rainMat);
     this.rainPoints.visible = false;
     this.scene.add(this.rainPoints);
   }
@@ -77,13 +86,20 @@ export class WeatherSystem {
 
     const pos = this.rainGeo.attributes.position;
     for (let i = 0; i < this.rainCount; i++) {
-      let y = pos.getY(i) - this.velocities[i] * dt;
+      const topIdx = i * 2;
+      const botIdx = i * 2 + 1;
+      let y = pos.getY(topIdx) - this.velocities[i] * dt;
       if (y < 0) {
         y = 28 + Math.random() * 4;
-        pos.setX(i, (Math.random() - 0.5) * this.rainRadius * 2);
-        pos.setZ(i, (Math.random() - 0.5) * this.rainRadius * 2);
+        const rx = (Math.random() - 0.5) * this.rainRadius * 2;
+        const rz = (Math.random() - 0.5) * this.rainRadius * 2;
+        pos.setX(topIdx, rx);
+        pos.setZ(topIdx, rz);
+        pos.setX(botIdx, rx - 0.15);
+        pos.setZ(botIdx, rz - 0.15);
       }
-      pos.setY(i, y);
+      pos.setY(topIdx, y);
+      pos.setY(botIdx, y - 1.2);
     }
     pos.needsUpdate = true;
   }

@@ -8,6 +8,7 @@ export class GameWorld {
     this.ramps = [];
     this.checkpoints = [];
     this.boostPads = [];
+    this.clouds = [];
     this.colliders = [];
 
     this.createTerrain();
@@ -19,6 +20,7 @@ export class GameWorld {
     this.createCheckpoints();
     this.createBoostPads();
     this.createVillageAndTunnel();
+    this.createClouds();
   }
 
   // Smooth undulating procedural landscape height formula
@@ -114,8 +116,7 @@ export class GameWorld {
       new THREE.Vector3(-60, 0, -180),
       new THREE.Vector3(80, 0, -200),
       new THREE.Vector3(160, 0, -110),
-      new THREE.Vector3(100, 0, -40),
-      new THREE.Vector3(0, 0, 0)
+      new THREE.Vector3(100, 0, -40)
     ];
 
     // Lift curve to match terrain
@@ -173,6 +174,47 @@ export class GameWorld {
     const roadMesh = new THREE.Mesh(roadGeo, roadMat);
     roadMesh.receiveShadow = true;
     this.scene.add(roadMesh);
+
+    // Dashed center lane markings along road circuit
+    const stripePoints = curve.getPoints(samples * 2);
+    const stripeGeo = new THREE.BufferGeometry();
+    const stripePos = [];
+    const stripeIndices = [];
+    let stripeIdx = 0;
+
+    for (let i = 0; i < stripePoints.length - 1; i += 2) {
+      const p = stripePoints[i];
+      const nextP = stripePoints[i + 1];
+      const dir = new THREE.Vector3().subVectors(nextP, p).normalize();
+      const normal = new THREE.Vector3(-dir.z, 0, dir.x).normalize();
+      const hw = 0.14; // Line half-width
+
+      const p1 = p.clone().addScaledVector(normal, -hw);
+      const p2 = p.clone().addScaledVector(normal, hw);
+      const p3 = nextP.clone().addScaledVector(normal, -hw);
+      const p4 = nextP.clone().addScaledVector(normal, hw);
+
+      p1.y = this.getTerrainHeight(p1.x, p1.z) + 0.14;
+      p2.y = this.getTerrainHeight(p2.x, p2.z) + 0.14;
+      p3.y = this.getTerrainHeight(p3.x, p3.z) + 0.14;
+      p4.y = this.getTerrainHeight(p4.x, p4.z) + 0.14;
+
+      stripePos.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z);
+      stripeIndices.push(stripeIdx, stripeIdx + 1, stripeIdx + 2, stripeIdx + 1, stripeIdx + 3, stripeIdx + 2);
+      stripeIdx += 4;
+    }
+
+    stripeGeo.setAttribute('position', new THREE.Float32BufferAttribute(stripePos, 3));
+    stripeGeo.setIndex(stripeIndices);
+    stripeGeo.computeVertexNormals();
+
+    const stripeMesh = new THREE.Mesh(stripeGeo, new THREE.MeshStandardMaterial({
+      color: 0xffeb3b,
+      roughness: 0.4,
+      emissive: 0xffd54f,
+      emissiveIntensity: 0.35,
+    }));
+    this.scene.add(stripeMesh);
 
     // Save road path curve for mini-map rendering
     this.roadCurve = curve;
@@ -411,6 +453,14 @@ export class GameWorld {
       if (!coin.userData.collected) {
         coin.rotation.y = time * 3;
         coin.position.y = coin.userData.baseHeight + Math.sin(time * 4 + coin.userData.id) * 0.3;
+      }
+    }
+
+    // Animate drifting clouds
+    if (this.clouds) {
+      for (const cloud of this.clouds) {
+        cloud.position.x += 0.05;
+        if (cloud.position.x > 500) cloud.position.x = -500;
       }
     }
   }
@@ -750,5 +800,36 @@ export class GameWorld {
     });
 
     this.scene.add(tunnelGroup);
+  }
+
+  createClouds() {
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.4,
+      metalness: 0.05,
+      flatShading: true,
+    });
+    const puffGeo = new THREE.DodecahedronGeometry(7, 1);
+
+    for (let i = 0; i < 35; i++) {
+      const cloud = new THREE.Group();
+      const cx = (Math.random() - 0.5) * 900;
+      const cy = 75 + Math.random() * 45;
+      const cz = (Math.random() - 0.5) * 900;
+      cloud.position.set(cx, cy, cz);
+
+      // Multiple overlapping puffs
+      const puffCount = 3 + Math.floor(Math.random() * 3);
+      for (let p = 0; p < puffCount; p++) {
+        const puff = new THREE.Mesh(puffGeo, cloudMat);
+        puff.position.set((p - puffCount / 2) * 6, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 4);
+        const s = 0.7 + Math.random() * 0.6;
+        puff.scale.set(s, s * 0.75, s);
+        cloud.add(puff);
+      }
+
+      this.clouds.push(cloud);
+      this.scene.add(cloud);
+    }
   }
 }

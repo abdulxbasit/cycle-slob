@@ -23,7 +23,7 @@ export class HUD {
     this.trickTimeout = null;
   }
 
-  update(physicsData, coinsCollected, cameraMode, world) {
+  update(physicsData, coinsCollected, cameraMode, world, timeTrialData = null) {
     // 1. Speedometer
     const speed = Math.round(physicsData.speedKmh);
     if (this.speedValueEl) {
@@ -98,7 +98,7 @@ export class HUD {
     return `${pad(mins)}:${pad(secs)}.${ms}`;
   }
 
-  drawMinimap(physicsData, world) {
+  drawMinimap(physicsData, world, activeCpIdx = 0) {
     if (!this.mapCtx || !world) return;
     const ctx = this.mapCtx;
     const w = this.mapCanvas.width;

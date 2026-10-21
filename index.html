@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script>
+    window.addEventListener('error', function(e) {
+      window.__last_error = { message: e.message, filename: e.filename, lineno: e.lineno, colno: e.colno, stack: e.error ? e.error.stack : '' };
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      window.__last_error = { message: 'Promise rejection: ' + (e.reason ? (e.reason.message || e.reason) : 'unknown'), stack: e.reason ? e.reason.stack : '' };
+    });
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>VeloCity 3D - Free Ride Bicycle Adventure</title>

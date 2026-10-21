@@ -17,7 +17,11 @@ class Game {
     this.scene.background = new THREE.Color(0x81d4fa);
     this.scene.fog = new THREE.FogExp2(0x81d4fa, 0.0035);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance',
+      preserveDrawingBuffer: true
+    });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
@@ -65,7 +69,8 @@ class Game {
 
     // Start Loop
     this.animate = this.animate.bind(this);
-    requestAnimationFrame(this.animate);
+    this.animate(); // Render immediately!
+    this.renderer.setAnimationLoop(this.animate);
   }
 
   setupLighting() {
@@ -84,7 +89,8 @@ class Game {
     this.dirLight.shadow.camera.right = d;
     this.dirLight.shadow.camera.top = d;
     this.dirLight.shadow.camera.bottom = -d;
-    this.dirLight.shadow.bias = -0.0005;
+    this.dirLight.shadow.bias = -0.00005;
+    this.dirLight.shadow.normalBias = 0.04;
     this.scene.add(this.dirLight);
     this.scene.add(this.dirLight.target);
   }
@@ -451,7 +457,11 @@ class Game {
   }
 }
 
-// Boot game when DOM is loaded
-window.addEventListener('DOMContentLoaded', () => {
-  new Game();
-});
+// Boot game safely across all load timings
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.__game = new Game();
+  });
+} else {
+  window.__game = new Game();
+}

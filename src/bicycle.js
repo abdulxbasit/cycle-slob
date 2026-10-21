@@ -115,6 +115,7 @@ export class Bicycle {
 
   buildBicycle() {
     this.bikeBody = new THREE.Group();
+    this.bikeBody.rotation.y = -Math.PI / 2; // Orient forward along +Z
     this.root.add(this.bikeBody);
 
     // Key Frame Coordinates (Relative to Bottom Bracket at [0, 0.42, 0])
@@ -319,7 +320,7 @@ export class Bicycle {
   }
 
   getRearWheelContactPosition() {
-    const rearLocal = new THREE.Vector3(-this.wheelbase * 0.52, 0, 0);
+    const rearLocal = new THREE.Vector3(0, 0, -this.wheelbase * 0.52);
     return this.root.localToWorld(rearLocal);
   }
 

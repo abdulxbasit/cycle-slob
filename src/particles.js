@@ -77,7 +77,8 @@ export class ParticleAndSkidSystem {
   }
 
   addSkidSegment(startPos, endPos) {
-    if (startPos.distanceTo(endPos) < 0.25) return;
+    const dist = startPos.distanceTo(endPos);
+    if (dist < 0.25 || dist > 2.5) return;
 
     // Create a ground-aligned quad for the tire mark
     const dir = new THREE.Vector3().subVectors(endPos, startPos).normalize();
