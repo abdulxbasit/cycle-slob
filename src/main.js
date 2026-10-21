@@ -6,6 +6,7 @@ import { sound } from './audio.js';
 import { HUD } from './hud.js';
 import { ParticleAndSkidSystem } from './particles.js';
 import { WeatherSystem } from './weather.js';
+import { GhostSystem } from './ghost.js';
 
 class Game {
   constructor() {
@@ -29,7 +30,7 @@ class Game {
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1500);
-    this.cameraModes = ['Chase', 'Cockpit', 'Orbit'];
+    this.cameraModes = ['Chase', 'Cockpit', 'Orbit', 'Ghost Cam'];
     this.cameraIndex = 0;
 
     // Game Objects
@@ -39,6 +40,7 @@ class Game {
     this.particles = new ParticleAndSkidSystem(this.scene, this.world);
     this.weather = new WeatherSystem(this.scene);
     this.hud = new HUD();
+    this.ghost = new GhostSystem(this.scene, this.world);
 
     this.coinsCollected = 0;
     this.isNight = false;
@@ -195,6 +197,10 @@ class Game {
         const track = sound.cycleMusicTrack();
         this.updateMusicUI(track);
       }
+      if (e.code === 'KeyH') {
+        const isVisible = this.ghost.toggleVisible();
+        this.updateGhostUI(isVisible);
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -270,8 +276,28 @@ class Game {
       resetBtn.addEventListener('click', () => this.resetBike());
     }
 
+    const ghostBtn = document.getElementById('ghost-btn');
+    if (ghostBtn) {
+      ghostBtn.addEventListener('click', () => {
+        const isVisible = this.ghost.toggleVisible();
+        this.updateGhostUI(isVisible);
+      });
+    }
+
     this.hud.setupBikeShop(this.bicycle, this.physics, sound);
     this.updateMusicUI(sound.getMusicTrackInfo());
+    this.updateGhostUI(this.ghost.enabled);
+  }
+
+  updateGhostUI(isVisible) {
+    const btn = document.getElementById('ghost-btn');
+    if (!btn) return;
+    btn.textContent = isVisible ? '👻 GHOST: ON' : '👻 GHOST: OFF';
+    if (isVisible) {
+      btn.classList.add('ww-btn-highlight');
+    } else {
+      btn.classList.remove('ww-btn-highlight');
+    }
   }
 
   updateMusicUI(trackInfo) {
@@ -363,6 +389,18 @@ class Game {
       const time = this.clock.getElapsedTime() * 0.3;
       this.camera.position.set(pos.x + Math.sin(time) * 10, pos.y + 6, pos.z + Math.cos(time) * 10);
       this.camera.lookAt(pos.x, pos.y + 0.8, pos.z);
+    } else if (mode === 'Ghost Cam' && this.ghost && this.ghost.ghostPosition) {
+      // Spectator camera locked onto the Holographic Ghost Cyclist
+      const gPos = this.ghost.ghostPosition;
+      const gHeading = this.ghost.ghostHeading;
+      const dist = 3.8;
+      const height = 1.9;
+      const targetCamX = gPos.x - Math.sin(gHeading) * dist;
+      const targetCamZ = gPos.z - Math.cos(gHeading) * dist;
+      const targetCamY = gPos.y + height;
+
+      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.2);
+      this.camera.lookAt(new THREE.Vector3(gPos.x + Math.sin(gHeading) * 2.0, gPos.y + 0.95, gPos.z + Math.cos(gHeading) * 2.0));
     }
   }
 
@@ -396,9 +434,10 @@ class Game {
     this.world.update(elapsedTime);
     this.weather.update(dt, this.physics.position);
 
-    // Time Trial Progress
+    // Time Trial Progress & Replay Recording
     if (this.lapActive) {
       this.lapTime += dt;
+      this.ghost.recordSample(this.lapTime, this.physics, physicsData);
     }
 
     if (this.world.checkCheckpointHit(this.physics.position, this.activeCheckpoint)) {
@@ -415,11 +454,14 @@ class Game {
             physicsData.trickName = `🏁 LAP: ${this.hud.formatTime(this.lapTime)}`;
           }
           this.physics.stuntScore += 1000;
+          this.ghost.onLapComplete(this.lapTime);
         }
         this.lapTime = 0;
         this.lapActive = true;
         this.activeCheckpoint = 1;
+        this.ghost.onLapStart();
       } else {
+        this.ghost.onCheckpointHit(this.activeCheckpoint, this.lapTime);
         this.activeCheckpoint = (this.activeCheckpoint + 1) % this.world.checkpoints.length;
         this.physics.stuntScore += 100;
       }
@@ -447,6 +489,9 @@ class Game {
       physicsData.trickName = label;
     });
 
+    // Update Ghost Cyclist
+    const ghostData = this.ghost.update(dt, this.lapActive, this.lapTime, this.physics.position);
+
     // 5. Directional Light follow player for continuous dynamic shadows
     this.dirLight.position.set(
       this.physics.position.x + 80,
@@ -464,10 +509,12 @@ class Game {
       this.world,
       {
         lapTime: this.lapTime,
+        lapActive: this.lapActive,
         activeCheckpoint: this.activeCheckpoint,
         totalCheckpoints: this.world.checkpoints.length,
         bestLap: this.bestLap
-      }
+      },
+      ghostData
     );
 
     // 7. Render

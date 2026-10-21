@@ -1097,4 +1097,12 @@ export class GameWorld {
       }
     }
   }
+
+  getRoadCurve() {
+    return this.roadCurve;
+  }
+
+  getCheckpoints() {
+    return this.checkpoints;
+  }
 }

@@ -91,7 +91,7 @@
     "id": "TASK-012",
     "title": "Ghost Bike Record Lap Racing",
     "description": "Record player's best lap replay path and spawn a transparent glowing neon ghost cyclist to race against.",
-    "status": "pending",
+    "status": "completed",
     "targetFiles": ["src/bicycle.js", "src/world.js", "src/main.js"],
     "priority": 12
   },

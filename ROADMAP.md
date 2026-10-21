@@ -36,7 +36,7 @@ On each scheduled run:
 - [x] Modular Frankenstein bike builder with 6 slots (Frame, Fork, Wheels, Bars, Drivetrain, Saddle) affecting Power, Aero, Handling, and Grip (Completed TASK-008)
 - [x] Wheel World style arcade sports UI with Chakra Petch/Teko typography, dynamic speed streaks, and 360 showcase garage (Completed TASK-009)
 - [ ] Collectible shop where collected star coins can be spent on helmet skins and bell sound variants
-- [ ] Speed run ghost rider recording best lap replay
+- [x] Speed run ghost rider recording best lap replay (Completed TASK-012: transparent glowing holographic ghost cyclist with replay recording, benchmark pacing, real-time split deltas, minimap radar icon, and Ghost Cam view)
 
 ### Phase 4: Polish & Audio/Visuals
 - [x] Background procedural ambient music synthesizer (Completed TASK-011 - 3 tracks: Cyber Cruise, Neon Downhill, Sunset Glide with dynamic speed filter modulation and 'M' hotkey)

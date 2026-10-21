@@ -29,7 +29,7 @@ export class HUD {
     this.activeShopSlot = 'frame';
   }
 
-  update(physicsData, coinsCollected, cameraMode, world, timeTrialData = null) {
+  update(physicsData, coinsCollected, cameraMode, world, timeTrialData = null, ghostData = null) {
     // 1. Speedometer
     const speed = Math.round(physicsData.speedKmh);
     if (this.speedValueEl) {
@@ -105,8 +105,33 @@ export class HUD {
       }
     }
 
-    // 7. Mini-map
-    this.drawMinimap(physicsData, world, timeTrialData ? timeTrialData.activeCheckpoint : 0);
+    // 7. Ghost Split Delta Display
+    const ghostBadgeEl = document.getElementById('ghost-badge');
+    const ghostDeltaEl = document.getElementById('ghost-delta');
+    if (ghostBadgeEl && ghostDeltaEl) {
+      if (ghostData && ghostData.delta !== null && timeTrialData && timeTrialData.lapActive) {
+        ghostBadgeEl.classList.remove('hidden');
+        const d = ghostData.delta;
+        const sign = d <= 0 ? '-' : '+';
+        const absD = Math.abs(d).toFixed(2);
+        ghostDeltaEl.textContent = `${sign}${absD}s`;
+        if (d <= 0) {
+          ghostBadgeEl.style.borderColor = 'var(--ww-green)';
+          ghostBadgeEl.style.color = 'var(--ww-green)';
+        } else {
+          ghostBadgeEl.style.borderColor = 'var(--ww-coral)';
+          ghostBadgeEl.style.color = 'var(--ww-coral)';
+        }
+      } else if (ghostData && ghostData.bestLapTime) {
+        ghostBadgeEl.classList.remove('hidden');
+        ghostDeltaEl.textContent = this.formatTime(ghostData.bestLapTime);
+        ghostBadgeEl.style.borderColor = 'var(--ww-cyan)';
+        ghostBadgeEl.style.color = 'var(--ww-cyan)';
+      }
+    }
+
+    // 8. Mini-map with live ghost blip
+    this.drawMinimap(physicsData, world, timeTrialData ? timeTrialData.activeCheckpoint : 0, ghostData);
   }
 
   formatTime(seconds) {
@@ -118,7 +143,7 @@ export class HUD {
     return `${pad(mins)}:${pad(secs)}.${ms}`;
   }
 
-  drawMinimap(physicsData, world, activeCpIdx = 0) {
+  drawMinimap(physicsData, world, activeCpIdx = 0, ghostData = null) {
     if (!this.mapCtx || !world) return;
     const ctx = this.mapCtx;
     const w = this.mapCanvas.width;
@@ -201,6 +226,35 @@ export class HUD {
           ctx.stroke();
         }
       });
+    }
+
+    // Draw Ghost Blip
+    if (ghostData && ghostData.position) {
+      const gx = cx + (ghostData.position.x - px) * scale;
+      const gy = cy + (ghostData.position.z - pz) * scale;
+
+      // Outer glowing pulse ring
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(gx, gy, 7, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Ghost cyan diamond marker with heading orientation
+      ctx.save();
+      ctx.translate(gx, gy);
+      ctx.rotate(-ghostData.heading + Math.PI);
+      ctx.fillStyle = '#00f0ff';
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(0, -6);
+      ctx.lineTo(4, 5);
+      ctx.lineTo(0, 2);
+      ctx.lineTo(-4, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
 
     // Player arrow at center

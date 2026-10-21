@@ -179,8 +179,9 @@ export const BIKE_PARTS_CATALOG = {
 };
 
 export class Bicycle {
-  constructor(scene) {
+  constructor(scene, options = {}) {
     this.scene = scene;
+    this.isGhost = !!options.isGhost;
     this.root = new THREE.Group();
     this.scene.add(this.root);
 
@@ -234,6 +235,17 @@ export class Bicycle {
   }
 
   loadSavedParts() {
+    if (this.isGhost) {
+      this.equipped = {
+        frame: 'apex',
+        fork: 'aero',
+        wheels: 'aero',
+        bars: 'drop',
+        drivetrain: 'cassette',
+        saddle: 'racing',
+      };
+      return;
+    }
     try {
       const saved = localStorage.getItem('velocity_equipped_parts');
       if (saved) {
@@ -254,6 +266,155 @@ export class Bicycle {
   }
 
   initMaterials() {
+    if (this.isGhost) {
+      // Ethereal glowing holographic materials for ghost cyclist
+      this.frameMat = new THREE.MeshStandardMaterial({
+        color: 0x00f0ff,
+        emissive: 0x00e5ff,
+        emissiveIntensity: 0.9,
+        roughness: 0.1,
+        metalness: 0.85,
+        transparent: true,
+        opacity: 0.58,
+        depthWrite: false,
+      });
+
+      this.accentMat = new THREE.MeshStandardMaterial({
+        color: 0xff00aa, // Vibrant neon magenta
+        emissive: 0xff00aa,
+        emissiveIntensity: 1.1,
+        roughness: 0.2,
+        transparent: true,
+        opacity: 0.68,
+        depthWrite: false,
+      });
+
+      this.darkMetalMat = new THREE.MeshStandardMaterial({
+        color: 0x004466,
+        emissive: 0x00283d,
+        emissiveIntensity: 0.5,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false,
+      });
+
+      this.chromeMat = new THREE.MeshStandardMaterial({
+        color: 0xd0ffff,
+        emissive: 0x00f0ff,
+        emissiveIntensity: 1.0,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.65,
+        depthWrite: false,
+      });
+
+      this.rubberMat = new THREE.MeshStandardMaterial({
+        color: 0x006b8f,
+        emissive: 0x003e54,
+        emissiveIntensity: 0.6,
+        roughness: 0.3,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+      });
+
+      this.spokeMat = new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 0.95,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false,
+      });
+
+      this.goldMat = new THREE.MeshStandardMaterial({
+        color: 0xffea00,
+        emissive: 0xffea00,
+        emissiveIntensity: 1.1,
+        transparent: true,
+        opacity: 0.72,
+        depthWrite: false,
+      });
+
+      this.discRotorMat = new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        emissive: 0x00d4ff,
+        emissiveIntensity: 0.85,
+        transparent: true,
+        opacity: 0.6,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+
+      this.lightMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 2.0,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+      });
+
+      // Holographic Rider Materials
+      this.riderMat = new THREE.MeshStandardMaterial({
+        color: 0x00a8ff,
+        emissive: 0x0066cc,
+        emissiveIntensity: 0.75,
+        roughness: 0.25,
+        transparent: true,
+        opacity: 0.5,
+        depthWrite: false,
+      });
+
+      this.shortsMat = new THREE.MeshStandardMaterial({
+        color: 0x003366,
+        emissive: 0x002244,
+        emissiveIntensity: 0.55,
+        transparent: true,
+        opacity: 0.52,
+        depthWrite: false,
+      });
+
+      this.skinMat = new THREE.MeshStandardMaterial({
+        color: 0x80d8ff,
+        emissive: 0x0091ea,
+        emissiveIntensity: 0.7,
+        roughness: 0.3,
+        transparent: true,
+        opacity: 0.52,
+        depthWrite: false,
+      });
+
+      this.helmetMat = new THREE.MeshStandardMaterial({
+        color: 0xff00aa,
+        emissive: 0xff00aa,
+        emissiveIntensity: 1.3,
+        roughness: 0.2,
+        transparent: true,
+        opacity: 0.72,
+        depthWrite: false,
+      });
+
+      this.visorMat = new THREE.MeshStandardMaterial({
+        color: 0x00ffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 2.4,
+        transparent: true,
+        opacity: 0.9,
+        depthWrite: false,
+      });
+
+      this.shoeMat = new THREE.MeshStandardMaterial({
+        color: 0xff2a6d,
+        emissive: 0xff2a6d,
+        emissiveIntensity: 1.2,
+        transparent: true,
+        opacity: 0.75,
+        depthWrite: false,
+      });
+      return;
+    }
+
     // Punchy, stylized materials matching Wheel World Moebius comic palette
     this.frameMat = new THREE.MeshStandardMaterial({
       color: 0x00f0ff, // Vibrant Cyan
@@ -1228,6 +1389,18 @@ export class Bicycle {
     this.buildDrivetrain(this.equipped.drivetrain);
     this.buildSaddle(this.equipped.saddle);
     this.buildRider();
+
+    if (this.isGhost) {
+      this.root.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = false;
+          child.receiveShadow = false;
+        }
+      });
+      if (this.spotLight) {
+        this.spotLight.intensity = 0;
+      }
+    }
   }
 
   // --- Part Swapping API ---
@@ -1345,18 +1518,208 @@ export class Bicycle {
   }
 
   setFrameColor(color) {
+    if (this.isGhost) return;
     this.frameMat.color.set(color);
   }
 
   setAccentColor(color) {
+    if (this.isGhost) return;
     this.accentMat.color.set(color);
   }
 
   setHelmetColor(color) {
+    if (this.isGhost) return;
     this.helmetMat.color.set(color);
   }
 
   setJerseyColor(color) {
+    if (this.isGhost) return;
     this.riderMat.color.set(color);
+  }
+}
+
+// ========================================================
+// Transparent Glowing Holographic Ghost Cyclist
+// ========================================================
+export class GhostBicycle extends Bicycle {
+  constructor(scene) {
+    super(scene, { isGhost: true });
+
+    // Soft glowing cyan point light attached to the ghost
+    this.ghostGlow = new THREE.PointLight(0x00f0ff, 2.2, 9);
+    this.ghostGlow.position.set(0, 0.9, 0);
+    this.root.add(this.ghostGlow);
+
+    // 3D Floating Holographic Sprite Badge
+    this.badgeCanvas = document.createElement('canvas');
+    this.badgeCanvas.width = 256;
+    this.badgeCanvas.height = 72;
+    this.badgeCtx = this.badgeCanvas.getContext('2d');
+    this.badgeTexture = new THREE.CanvasTexture(this.badgeCanvas);
+    this.badgeTexture.minFilter = THREE.LinearFilter;
+    const badgeMat = new THREE.SpriteMaterial({
+      map: this.badgeTexture,
+      transparent: true,
+      depthWrite: false,
+    });
+    this.badgeSprite = new THREE.Sprite(badgeMat);
+    this.badgeSprite.scale.set(1.9, 0.54, 1);
+    this.badgeSprite.position.set(0, 1.95, 0);
+    this.root.add(this.badgeSprite);
+    this.badgeTime = 0;
+
+    this.setLabel('👻 RECORD GHOST', '00:00.0');
+
+    // Ghost Neon Particle Trail (Instanced glowing particles)
+    this.initTrail();
+  }
+
+  setLabel(title, timeStr = '') {
+    const ctx = this.badgeCtx;
+    const w = this.badgeCanvas.width;
+    const h = this.badgeCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Glowing Hologram Pill Box
+    ctx.fillStyle = 'rgba(10, 15, 26, 0.88)';
+    ctx.beginPath();
+    ctx.roundRect(4, 4, w - 8, h - 8, 14);
+    ctx.fill();
+
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 12;
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    // Title
+    ctx.font = 'bold 22px "Chakra Petch", sans-serif';
+    ctx.fillStyle = '#00f0ff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(title, w / 2, 26);
+
+    // Lap Time
+    if (timeStr) {
+      ctx.font = 'bold 20px "Teko", monospace';
+      ctx.fillStyle = '#ffe600';
+      ctx.fillText(timeStr, w / 2, 52);
+    }
+
+    this.badgeTexture.needsUpdate = true;
+  }
+
+  initTrail() {
+    this.maxTrail = 35;
+    this.trailParticles = [];
+    const pGeo = new THREE.OctahedronGeometry(0.065, 0);
+    const pMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      transparent: true,
+      opacity: 0.75,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    this.trailMesh = new THREE.InstancedMesh(pGeo, pMat, this.maxTrail);
+    this.trailMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.scene.add(this.trailMesh);
+
+    const dummy = new THREE.Object3D();
+    dummy.scale.set(0, 0, 0);
+    dummy.updateMatrix();
+    for (let i = 0; i < this.maxTrail; i++) {
+      this.trailMesh.setMatrixAt(i, dummy.matrix);
+      this.trailParticles.push({
+        active: false,
+        pos: new THREE.Vector3(),
+        life: 0,
+        maxLife: 0.5,
+        scale: 0.05,
+      });
+    }
+    this.trailMesh.instanceMatrix.needsUpdate = true;
+    this.trailIndex = 0;
+    this.emitTimer = 0;
+  }
+
+  emitTrailParticle() {
+    if (!this.root.visible) return;
+    const rearPos = this.getRearWheelContactPosition();
+    const p = this.trailParticles[this.trailIndex];
+    this.trailIndex = (this.trailIndex + 1) % this.maxTrail;
+    p.active = true;
+    p.life = 0;
+    p.maxLife = 0.55;
+    p.pos.copy(rearPos).add(new THREE.Vector3(
+      (Math.random() - 0.5) * 0.1,
+      0.08 + Math.random() * 0.12,
+      (Math.random() - 0.5) * 0.1
+    ));
+    p.scale = 0.09;
+  }
+
+  updateTrail(dt) {
+    this.emitTimer += dt;
+    if (this.emitTimer >= 0.035) {
+      this.emitTimer = 0;
+      this.emitTrailParticle();
+    }
+
+    const dummy = new THREE.Object3D();
+    let updated = false;
+
+    for (let i = 0; i < this.maxTrail; i++) {
+      const p = this.trailParticles[i];
+      if (p.active) {
+        p.life += dt;
+        if (p.life >= p.maxLife) {
+          p.active = false;
+          dummy.scale.set(0, 0, 0);
+          dummy.updateMatrix();
+          this.trailMesh.setMatrixAt(i, dummy.matrix);
+          updated = true;
+        } else {
+          const t = p.life / p.maxLife;
+          const currentScale = p.scale * (1 - t * 0.8);
+          dummy.position.copy(p.pos);
+          dummy.position.y += dt * 0.4;
+          dummy.scale.set(currentScale, currentScale * 1.5, currentScale);
+          dummy.updateMatrix();
+          this.trailMesh.setMatrixAt(i, dummy.matrix);
+          updated = true;
+        }
+      }
+    }
+
+    if (updated) {
+      this.trailMesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+
+  updateGhost(pos, heading, pitch, roll, steer, lean, velocity, dt) {
+    this.root.position.copy(pos);
+    this.root.rotation.order = 'YXZ';
+    this.root.rotation.y = heading;
+    this.root.rotation.x = pitch;
+    this.root.rotation.z = roll;
+
+    // Badge bobbing & pulsing
+    this.badgeTime += dt;
+    this.badgeSprite.position.y = 1.95 + Math.sin(this.badgeTime * 3) * 0.08;
+
+    // Update animations
+    super.update(velocity, steer, lean, dt);
+    this.updateTrail(dt);
+  }
+
+  setVisible(visible) {
+    this.root.visible = visible;
+    if (this.trailMesh) this.trailMesh.visible = visible;
+  }
+
+  destroy() {
+    this.scene.remove(this.root);
+    if (this.trailMesh) this.scene.remove(this.trailMesh);
   }
 }
