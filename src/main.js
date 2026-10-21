@@ -7,6 +7,7 @@ import { HUD } from './hud.js';
 import { ParticleAndSkidSystem } from './particles.js';
 import { WeatherSystem } from './weather.js';
 import { GhostSystem } from './ghost.js';
+import { PostProcessingManager } from './postprocessing.js';
 
 class Game {
   constructor() {
@@ -41,6 +42,7 @@ class Game {
     this.weather = new WeatherSystem(this.scene);
     this.hud = new HUD();
     this.ghost = new GhostSystem(this.scene, this.world);
+    this.postProcessing = new PostProcessingManager(this.renderer, this.scene, this.camera);
 
     this.coinsCollected = 0;
     this.isNight = false;
@@ -201,6 +203,10 @@ class Game {
         const isVisible = this.ghost.toggleVisible();
         this.updateGhostUI(isVisible);
       }
+      if (e.code === 'KeyV') {
+        const isEnabled = this.postProcessing.toggle();
+        this.updatePostProcessingUI(isEnabled);
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -284,9 +290,29 @@ class Game {
       });
     }
 
+    const bloomBtn = document.getElementById('bloom-btn');
+    if (bloomBtn) {
+      bloomBtn.addEventListener('click', () => {
+        const isEnabled = this.postProcessing.toggle();
+        this.updatePostProcessingUI(isEnabled);
+      });
+    }
+
     this.hud.setupBikeShop(this.bicycle, this.physics, sound);
     this.updateMusicUI(sound.getMusicTrackInfo());
     this.updateGhostUI(this.ghost.enabled);
+    this.updatePostProcessingUI(this.postProcessing.enabled);
+  }
+
+  updatePostProcessingUI(isEnabled) {
+    const btn = document.getElementById('bloom-btn');
+    if (!btn) return;
+    btn.textContent = isEnabled ? '✨ FX: ON' : '✨ FX: OFF';
+    if (isEnabled) {
+      btn.classList.add('ww-btn-highlight');
+    } else {
+      btn.classList.remove('ww-btn-highlight');
+    }
   }
 
   updateGhostUI(isVisible) {
@@ -333,6 +359,9 @@ class Game {
       this.camera.aspect = window.innerWidth / window.innerHeight;
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(window.innerWidth, window.innerHeight);
+      if (this.postProcessing) {
+        this.postProcessing.setSize(window.innerWidth, window.innerHeight);
+      }
     });
   }
 
@@ -532,8 +561,11 @@ class Game {
       ghostData
     );
 
-    // 7. Render
-    this.renderer.render(this.scene, this.camera);
+    // 7. Update Post-Processing (Bloom flare, Speed Vignette & Chromatic Aberration)
+    this.postProcessing.update(dt, physicsData.speedKmh, this.physics.maxSpeedKmh, physicsData.isBoosting, elapsedTime);
+
+    // 8. Render
+    this.postProcessing.render();
   }
 }
 

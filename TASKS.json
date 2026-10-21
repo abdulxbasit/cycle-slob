@@ -99,8 +99,8 @@
     "id": "TASK-013",
     "title": "Post-Processing Bloom & Speed Vignette",
     "description": "Add subtle screen vignette and bloom effects for neon signs, headlights, and boost pads using Three.js EffectComposer or procedural shaders.",
-    "status": "pending",
-    "targetFiles": ["src/main.js", "package.json"],
+    "status": "completed",
+    "targetFiles": ["src/main.js", "src/postprocessing.js", "index.html"],
     "priority": 13
   },
   {
@@ -110,5 +110,21 @@
     "status": "pending",
     "targetFiles": ["src/bicycle.js", "src/world.js", "src/main.js"],
     "priority": 14
+  },
+  {
+    "id": "TASK-015",
+    "title": "Dynamic Handlebar Vibration & High-Speed Camera Shake",
+    "description": "Procedural high-speed rumble, terrain bump micro-shake on gravel, and landing impact recoil for immersive camera feedback.",
+    "status": "pending",
+    "targetFiles": ["src/main.js", "src/physics.js"],
+    "priority": 15
+  },
+  {
+    "id": "TASK-016",
+    "title": "Arcade Star Coin Shop & Cosmetic Unlocks",
+    "description": "In-game unlockable shop spending collected Star Coins on glowing helmet visors, cyber neon tire trails, and bell sound variants.",
+    "status": "pending",
+    "targetFiles": ["src/hud.js", "src/bicycle.js", "index.html", "src/main.js"],
+    "priority": 16
   }
 ]
