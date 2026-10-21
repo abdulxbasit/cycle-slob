@@ -57,26 +57,34 @@
   },
   {
     "id": "TASK-008",
-    "title": "Bicycle Chassis Selector (BMX, MTB, Aero Road)",
-    "description": "Add distinct bicycle chassis archetypes with variable top speeds, turning radius, jump heights, and gear ratios.",
-    "status": "pending",
-    "targetFiles": ["src/bicycle.js", "src/physics.js", "index.html"],
+    "title": "Wheel World Frankenstein Modular Bike System & 3D Model Overhaul",
+    "description": "Overhaul procedural 3D bicycle with realistic stylized hydroformed frame, front suspension fork, disc brake rotors, knobby/aero wheels, 1x drivetrain/cassette, riser/drop bars, articulated cyclist with IK pedaling legs, and 6-slot modular parts builder (Frame, Fork, Wheels, Bars, Drivetrain, Saddle) affecting Power, Aero, Handling, and Grip.",
+    "status": "completed",
+    "targetFiles": ["src/bicycle.js", "src/physics.js", "src/hud.js", "src/main.js", "index.html"],
     "priority": 8
   },
   {
     "id": "TASK-009",
-    "title": "Dynamic Physics Obstacles & Traffic Cones",
-    "description": "Add knockable traffic cones, roadblock hurdles, and bowling pins that react dynamically to bicycle impacts.",
-    "status": "pending",
-    "targetFiles": ["src/world.js", "src/physics.js"],
+    "title": "Wheel World Arcade UI & Co-Op Workshop HUD",
+    "description": "Redesign HUD with bold retro-modern sports typography (Chakra Petch & Teko), angled badges, arcade speedometer, dynamic turbo speed streaks, and 360 rotating garage showcase view.",
+    "status": "completed",
+    "targetFiles": ["index.html", "src/hud.js", "src/main.js"],
     "priority": 9
   },
   {
     "id": "TASK-010",
+    "title": "Dynamic Physics Obstacles & Traffic Cones",
+    "description": "Add knockable traffic cones, roadblock hurdles, and bowling pins that react dynamically to bicycle impacts.",
+    "status": "pending",
+    "targetFiles": ["src/world.js", "src/physics.js"],
+    "priority": 10
+  },
+  {
+    "id": "TASK-011",
     "title": "Procedural Synthwave Chiptune BGM Synthesizer",
     "description": "Add a procedural Web Audio API synthwave/chiptune music player with bassline, arpeggios, and drums.",
     "status": "pending",
     "targetFiles": ["src/audio.js", "index.html"],
-    "priority": 10
+    "priority": 11
   }
 ]

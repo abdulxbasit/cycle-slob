@@ -66,6 +66,19 @@ class Game {
     this.setupUI();
     this.setupWindowResize();
 
+    // Load saved colors
+    const savedFrame = localStorage.getItem('velocity_paint_frame');
+    if (savedFrame) this.bicycle.setFrameColor(savedFrame);
+    const savedAccent = localStorage.getItem('velocity_paint_accent');
+    if (savedAccent) this.bicycle.setAccentColor(savedAccent);
+    const savedHelmet = localStorage.getItem('velocity_paint_helmet');
+    if (savedHelmet) this.bicycle.setHelmetColor(savedHelmet);
+    const savedJersey = localStorage.getItem('velocity_paint_jersey');
+    if (savedJersey) this.bicycle.setJerseyColor(savedJersey);
+
+    // Apply modular parts physics
+    this.physics.applyBikeStats(this.bicycle.getOverallStats());
+
     // Start Game Loop
     this.animate = this.animate.bind(this);
     requestAnimationFrame(this.animate);
@@ -244,52 +257,7 @@ class Game {
       resetBtn.addEventListener('click', () => this.resetBike());
     }
 
-    this.setupGarage();
-  }
-
-  setupGarage() {
-    const modal = document.getElementById('garage-modal');
-    const openBtn = document.getElementById('garage-btn');
-    const closeBtn = document.getElementById('garage-close');
-
-    const toggleGarage = () => {
-      if (modal) modal.classList.toggle('hidden');
-    };
-
-    if (openBtn) openBtn.addEventListener('click', toggleGarage);
-    if (closeBtn) closeBtn.addEventListener('click', toggleGarage);
-
-    // Load saved colors
-    const savedFrame = localStorage.getItem('velocity_paint_frame');
-    if (savedFrame) this.bicycle.setFrameColor(savedFrame);
-    const savedHelmet = localStorage.getItem('velocity_paint_helmet');
-    if (savedHelmet) this.bicycle.setHelmetColor(savedHelmet);
-    const savedJersey = localStorage.getItem('velocity_paint_jersey');
-    if (savedJersey) this.bicycle.setJerseyColor(savedJersey);
-
-    // Swatches
-    document.querySelectorAll('.swatch').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const type = btn.getAttribute('data-type');
-        const color = btn.getAttribute('data-color');
-
-        if (btn.parentElement) {
-          btn.parentElement.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
-          btn.classList.add('selected');
-        }
-
-        if (type === 'frame') {
-          this.bicycle.setFrameColor(color);
-          localStorage.setItem('velocity_paint_frame', color);
-        } else if (type === 'helmet') {
-          this.bicycle.setHelmetColor(color);
-          localStorage.setItem('velocity_paint_helmet', color);
-        } else if (type === 'jersey') {
-          this.bicycle.setJerseyColor(color);
-          localStorage.setItem('velocity_paint_jersey', color);
-        }
-      });
-    });
+    this.hud.setupBikeShop(this.bicycle, this.physics, sound);
   }
 
   cycleCamera() {
@@ -309,6 +277,22 @@ class Game {
   }
 
   updateCamera(dt, isBoosting) {
+    const modal = document.getElementById('garage-modal');
+    const isGarageOpen = modal && !modal.classList.contains('hidden');
+
+    if (isGarageOpen) {
+      // 360 Showcase camera orbiting the custom bicycle, framed nicely on the right
+      const time = this.clock.getElapsedTime() * 0.35;
+      const pos = this.physics.position;
+      const orbitDist = 2.7;
+      const camX = pos.x + Math.sin(time) * orbitDist + 0.6;
+      const camZ = pos.z + Math.cos(time) * orbitDist;
+      const camY = pos.y + 0.95;
+      this.camera.position.lerp(new THREE.Vector3(camX, camY, camZ), 0.1);
+      this.camera.lookAt(new THREE.Vector3(pos.x - 0.4, pos.y + 0.55, pos.z));
+      return;
+    }
+
     const targetFov = isBoosting ? 78 : 65;
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, (dt || 0.016) * 5);
     this.camera.updateProjectionMatrix();
@@ -318,18 +302,18 @@ class Game {
     const heading = this.physics.heading;
 
     if (mode === 'Chase') {
-      // Third person follow camera
-      const dist = 4.8;
-      const height = 2.4;
+      // Third person follow camera - slightly elevated 3/4 sports angle showing the entire bike
+      const dist = 4.6;
+      const height = 2.2;
       const targetCamX = pos.x - Math.sin(heading) * dist;
       const targetCamZ = pos.z - Math.cos(heading) * dist;
       const targetCamY = pos.y + height;
 
-      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.12);
+      this.camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.14);
       const lookTarget = new THREE.Vector3(
-        pos.x + Math.sin(heading) * 3,
-        pos.y + 1.2,
-        pos.z + Math.cos(heading) * 3
+        pos.x + Math.sin(heading) * 2.5,
+        pos.y + 0.85,
+        pos.z + Math.cos(heading) * 2.5
       );
       this.camera.lookAt(lookTarget);
     } else if (mode === 'Cockpit') {
@@ -349,8 +333,8 @@ class Game {
     } else if (mode === 'Orbit') {
       // Isometric action view
       const time = this.clock.getElapsedTime() * 0.3;
-      this.camera.position.set(pos.x + Math.sin(time) * 12, pos.y + 7, pos.z + Math.cos(time) * 12);
-      this.camera.lookAt(pos.x, pos.y + 1, pos.z);
+      this.camera.position.set(pos.x + Math.sin(time) * 10, pos.y + 6, pos.z + Math.cos(time) * 10);
+      this.camera.lookAt(pos.x, pos.y + 0.8, pos.z);
     }
   }
 

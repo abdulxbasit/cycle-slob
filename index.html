@@ -11,8 +11,24 @@
   </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>VeloCity 3D - Free Ride Bicycle Adventure</title>
+  <title>Wheel World 3D - Free Ride Cycling Adventure</title>
+  
+  <!-- Wheel World Graphic Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,600;0,700;1,700;1,800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+
   <style>
+    :root {
+      --ww-yellow: #ffe600;
+      --ww-cyan: #00f0ff;
+      --ww-coral: #ff2a6d;
+      --ww-green: #05ffa1;
+      --ww-dark: #0f1118;
+      --ww-panel: rgba(15, 17, 24, 0.88);
+      --ww-border: #222634;
+    }
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -25,8 +41,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #000;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: #050608;
+      font-family: 'Chakra Petch', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     #canvas-container {
@@ -36,6 +52,24 @@
       width: 100%;
       height: 100%;
       z-index: 1;
+    }
+
+    /* Boost Speed Lines Overlay */
+    #speed-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      background: radial-gradient(circle at center, transparent 40%, rgba(0, 240, 255, 0.08) 80%, rgba(255, 42, 109, 0.18) 100%);
+    }
+
+    #speed-lines.active {
+      opacity: 1;
     }
 
     /* UI Overlay */
@@ -53,135 +87,203 @@
       pointer-events: auto;
     }
 
-    /* Header Bar */
+    /* Top Stats Bar */
     .top-bar {
       position: absolute;
-      top: 16px;
-      left: 20px;
-      right: 20px;
+      top: 14px;
+      left: 18px;
+      right: 18px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      gap: 12px;
     }
 
-    .stat-badge {
-      display: inline-flex;
-      align-items: center;
+    .stats-cluster {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
-      padding: 8px 16px;
-      border-radius: 9999px;
-      color: #fff;
-      font-weight: 600;
-      font-size: 14px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      margin-right: 8px;
-      margin-bottom: 8px;
+      align-items: center;
     }
 
-    .badge-gold {
-      color: #ffd700;
-      border-color: rgba(255, 215, 0, 0.4);
-    }
-
-    .badge-cyan {
-      color: #00e5ff;
-      border-color: rgba(0, 229, 255, 0.4);
-    }
-
-    .action-btn {
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-      transition: all 0.15s ease;
+    .ww-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      background: var(--ww-panel);
+      border: 2px solid #2a2f42;
+      backdrop-filter: blur(10px);
+      padding: 6px 14px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      text-transform: uppercase;
+      font-style: italic;
     }
 
-    .action-btn:hover {
-      background: rgba(0, 229, 255, 0.2);
-      border-color: #00e5ff;
-      transform: translateY(-1px);
+    .badge-yellow {
+      border-color: var(--ww-yellow);
+      color: var(--ww-yellow);
+      box-shadow: 0 0 12px rgba(255, 230, 0, 0.25);
     }
 
-    .action-btn:active {
+    .badge-cyan {
+      border-color: var(--ww-cyan);
+      color: var(--ww-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+    }
+
+    .badge-green {
+      border-color: var(--ww-green);
+      color: var(--ww-green);
+    }
+
+    .badge-coral {
+      border-color: var(--ww-coral);
+      color: var(--ww-coral);
+    }
+
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .ww-btn {
+      background: var(--ww-panel);
+      border: 2px solid #343c54;
+      color: #fff;
+      padding: 7px 12px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.12s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+    }
+
+    .ww-btn:hover {
+      background: var(--ww-cyan);
+      color: #000;
+      border-color: #fff;
+      transform: translateY(-1px) scale(1.02);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+    }
+
+    .ww-btn:active {
       transform: translateY(1px);
     }
 
-    /* Minimap Widget */
+    .ww-btn-highlight {
+      border-color: var(--ww-yellow);
+      color: var(--ww-yellow);
+    }
+    .ww-btn-highlight:hover {
+      background: var(--ww-yellow);
+      color: #000;
+      box-shadow: 0 0 14px rgba(255, 230, 0, 0.5);
+    }
+
+    /* Minimap Widget Top Right */
     .minimap-container {
       position: absolute;
-      top: 16px;
-      right: 20px;
+      top: 68px;
+      right: 18px;
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 8px;
+      gap: 6px;
     }
 
     #minimap-canvas {
-      width: 130px;
-      height: 130px;
+      width: 124px;
+      height: 124px;
       border-radius: 50%;
-      background: rgba(15, 23, 42, 0.8);
-      border: 2px solid #00e5ff;
-      box-shadow: 0 0 16px rgba(0, 229, 255, 0.4);
+      background: rgba(15, 17, 24, 0.85);
+      border: 2px solid var(--ww-cyan);
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
     }
 
-    /* Speedometer Gauge Bottom Right */
+    /* Wheel World Arcade Speedometer */
     .speedometer {
       position: absolute;
       bottom: 24px;
       right: 24px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(0, 229, 255, 0.35);
-      backdrop-filter: blur(12px);
-      border-radius: 20px;
-      padding: 16px 24px;
-      text-align: center;
+      background: var(--ww-panel);
+      border: 2px solid var(--ww-cyan);
+      backdrop-filter: blur(14px);
+      padding: 14px 22px;
+      clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
       color: #fff;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), inset 0 0 16px rgba(0, 240, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 130px;
+    }
+
+    .speed-header {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #7b88a8;
+      text-transform: uppercase;
+      font-style: italic;
     }
 
     .speed-number {
-      font-size: 48px;
-      font-weight: 800;
-      color: #00e5ff;
-      line-height: 1;
-      text-shadow: 0 0 12px rgba(0, 229, 255, 0.6);
+      font-family: 'Teko', sans-serif;
+      font-size: 64px;
+      font-weight: 700;
+      color: var(--ww-cyan);
+      line-height: 0.85;
+      text-shadow: 0 0 16px rgba(0, 240, 255, 0.6);
       font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+    }
+
+    .speed-number.boosting {
+      color: var(--ww-coral);
+      text-shadow: 0 0 20px rgba(255, 42, 109, 0.8);
+      animation: speedPulse 0.3s infinite alternate;
+    }
+
+    @keyframes speedPulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
     }
 
     .speed-unit {
       font-size: 12px;
-      letter-spacing: 2px;
-      color: #94a3b8;
-      margin-top: 2px;
-      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--ww-yellow);
+      font-weight: 800;
+      font-style: italic;
     }
 
     .speed-track {
-      width: 100px;
+      width: 100%;
       height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-      margin-top: 10px;
+      background: #1a1e2c;
+      margin-top: 8px;
       overflow: hidden;
+      border: 1px solid #2e354a;
     }
 
     .speed-fill {
       width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, #00e5ff, #ff3366);
+      background: linear-gradient(90deg, var(--ww-cyan), var(--ww-yellow), var(--ww-coral));
       transition: width 0.05s linear;
     }
 
@@ -190,54 +292,61 @@
       position: absolute;
       bottom: 24px;
       left: 24px;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
-      border-radius: 16px;
-      padding: 14px 18px;
-      color: #cbd5e1;
+      background: var(--ww-panel);
+      border: 2px solid #2b3145;
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      color: #9aa5be;
       font-size: 12px;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
       max-width: 320px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
 
     .controls-hint h4 {
-      color: #fff;
+      color: var(--ww-yellow);
       font-size: 13px;
-      margin-bottom: 8px;
+      font-style: italic;
+      margin-bottom: 6px;
       display: flex;
       align-items: center;
       gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .key-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
+      font-size: 11px;
+      font-weight: 600;
     }
 
     .kbd {
-      background: #1e293b;
-      border: 1px solid #475569;
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-weight: bold;
-      color: #38bdf8;
-      font-size: 11px;
+      background: #191c28;
+      border: 1px solid #3c4560;
+      padding: 1px 6px;
+      font-weight: 700;
+      color: var(--ww-cyan);
+      font-size: 10px;
+      font-family: monospace;
     }
 
     /* Stunt Trick Announcement */
     #trick-popup {
       position: absolute;
-      top: 28%;
+      top: 26%;
       left: 50%;
       transform: translate(-50%, -50%) scale(1);
-      color: #ffea00;
-      font-size: 32px;
-      font-weight: 900;
+      color: var(--ww-yellow);
+      font-family: 'Teko', sans-serif;
+      font-size: 54px;
+      font-weight: 700;
+      font-style: italic;
       letter-spacing: 2px;
       text-transform: uppercase;
-      text-shadow: 0 0 16px rgba(255, 234, 0, 0.8), 2px 2px 0 #000;
+      text-shadow: 0 0 24px rgba(255, 230, 0, 0.9), 3px 3px 0 #000;
       pointer-events: none;
       transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
@@ -251,108 +360,335 @@
     }
 
     @keyframes popJump {
-      0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
-      20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-      80% { transform: translate(-50%, -60%) scale(1.0); opacity: 1; }
-      100% { transform: translate(-50%, -75%) scale(0.8); opacity: 0; }
+      0% { transform: translate(-50%, -50%) scale(0.6) rotate(-4deg); opacity: 0; }
+      20% { transform: translate(-50%, -50%) scale(1.2) rotate(2deg); opacity: 1; }
+      80% { transform: translate(-50%, -60%) scale(1.0) rotate(0deg); opacity: 1; }
+      100% { transform: translate(-50%, -80%) scale(0.8) rotate(4deg); opacity: 0; }
     }
 
     /* Mobile Onscreen Controls */
-    .touch-controls {
+    .touch-controls, .touch-actions {
       display: none;
       position: absolute;
       bottom: 24px;
-      left: 20px;
       z-index: 20;
     }
-
-    .touch-actions {
-      display: none;
-      position: absolute;
-      bottom: 24px;
-      right: 20px;
-      z-index: 20;
-    }
+    .touch-controls { left: 20px; }
+    .touch-actions { right: 20px; }
 
     @media (pointer: coarse), (max-width: 768px) {
-      .touch-controls, .touch-actions {
-        display: flex;
-        gap: 12px;
-      }
-      .controls-hint {
-        display: none;
-      }
+      .touch-controls, .touch-actions { display: flex; gap: 10px; }
+      .controls-hint { display: none; }
     }
 
     .touch-btn {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: rgba(15, 23, 42, 0.7);
-      border: 2px solid rgba(0, 229, 255, 0.5);
+      width: 54px;
+      height: 54px;
+      background: var(--ww-panel);
+      border: 2px solid var(--ww-cyan);
       color: #fff;
       font-size: 20px;
+      font-weight: bold;
       display: flex;
       align-items: center;
       justify-content: center;
       touch-action: manipulation;
+      clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
     }
 
-    /* Garage Customization Modal */
+    /* =========================================
+       WHEEL WORLD FRANKENSTEIN BIKE BUILDER MODAL
+       ========================================= */
     #garage-modal {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(0, 229, 255, 0.4);
-      backdrop-filter: blur(16px);
-      border-radius: 20px;
-      padding: 24px;
-      width: 90%;
-      max-width: 420px;
+      top: 74px;
+      left: 24px;
+      bottom: 24px;
+      background: rgba(13, 15, 22, 0.95);
+      border: 2px solid var(--ww-yellow);
+      box-shadow: 0 0 35px rgba(255, 230, 0, 0.25), 0 20px 60px rgba(0,0,0,0.85);
+      width: 490px;
+      max-width: calc(100% - 48px);
+      display: flex;
+      flex-direction: column;
       color: #fff;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
-      z-index: 50;
+      z-index: 100;
+      clip-path: polygon(18px 0, 100% 0, calc(100% - 18px) 100%, 0 100%);
+      overflow: hidden;
     }
 
     .garage-header {
+      background: #171b28;
+      border-bottom: 2px solid #282f45;
+      padding: 16px 22px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
     }
 
-    .garage-header h3 {
-      font-size: 18px;
-      color: #00e5ff;
+    .garage-title h3 {
+      font-size: 20px;
+      font-weight: 800;
+      font-style: italic;
+      color: var(--ww-yellow);
+      letter-spacing: 1px;
+      text-transform: uppercase;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+    }
+
+    .garage-title p {
+      font-size: 11px;
+      color: #8c97b2;
+      margin-top: 2px;
+      font-style: normal;
     }
 
     .close-btn {
-      background: transparent;
-      border: none;
-      color: #94a3b8;
-      font-size: 22px;
+      background: #252b3d;
+      border: 1px solid #454f6e;
+      color: #cbd5e1;
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s ease;
     }
 
     .close-btn:hover {
+      background: var(--ww-coral);
       color: #fff;
+      border-color: #fff;
     }
 
-    .garage-section {
+    /* Overall Stats Banner */
+    .stats-dashboard {
+      background: #121520;
+      border-bottom: 2px solid #252a3b;
+      padding: 14px 22px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .stats-dashboard {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .stat-gauge {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-style: italic;
+      color: #8e9bb8;
+    }
+
+    .stat-val {
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .stat-bar-track {
+      width: 100%;
+      height: 8px;
+      background: #1c2130;
+      border: 1px solid #30374d;
+      overflow: hidden;
+    }
+
+    .stat-bar-fill {
+      height: 100%;
+      width: 80%;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .fill-power { background: linear-gradient(90deg, #ff2a6d, #ff6b4a); }
+    .fill-aero { background: linear-gradient(90deg, #00f0ff, #38bdf8); }
+    .fill-handling { background: linear-gradient(90deg, #ffe600, #a3e635); }
+    .fill-grip { background: linear-gradient(90deg, #05ffa1, #10b981); }
+
+    /* Category Navigation Tabs */
+    .category-tabs {
+      display: flex;
+      background: #151824;
+      border-bottom: 2px solid #272d40;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .category-tabs::-webkit-scrollbar { display: none; }
+
+    .cat-tab {
+      padding: 10px 18px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: #7d8ba8;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      font-style: italic;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .cat-tab:hover {
+      color: #fff;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .cat-tab.active {
+      color: var(--ww-yellow);
+      border-bottom-color: var(--ww-yellow);
+      background: rgba(255, 230, 0, 0.06);
+    }
+
+    /* Parts Content Scroll Area */
+    .garage-content {
+      padding: 18px 22px;
+      overflow-y: auto;
+      max-height: 52vh;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .part-card {
+      background: #171a26;
+      border: 2px solid #293044;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.15s ease;
+      clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    }
+
+    .part-card:hover {
+      border-color: var(--ww-cyan);
+      background: #1b2030;
+      transform: translateX(4px);
+    }
+
+    .part-card.equipped {
+      border-color: var(--ww-yellow);
+      background: rgba(255, 230, 0, 0.05);
+      box-shadow: inset 0 0 14px rgba(255, 230, 0, 0.08);
+    }
+
+    .part-info {
+      flex: 1;
+    }
+
+    .part-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+
+    .part-name {
+      font-size: 15px;
+      font-weight: 700;
+      font-style: italic;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+
+    .part-desc {
+      font-size: 11px;
+      color: #8c97b2;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .part-perk {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ww-yellow);
+      background: rgba(255, 230, 0, 0.1);
+      border: 1px solid rgba(255, 230, 0, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-style: italic;
+    }
+
+    .part-stats-mini {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .mini-stat {
+      font-size: 10px;
+      font-weight: 700;
+      color: #a3b0cc;
+      background: #10131d;
+      padding: 2px 6px;
+      border: 1px solid #232838;
+    }
+
+    .equip-btn {
+      background: #252b3d;
+      border: 2px solid #3c4663;
+      color: #fff;
+      padding: 8px 18px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      font-style: italic;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+      clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+    }
+
+    .equip-btn:hover {
+      background: var(--ww-cyan);
+      color: #000;
+      border-color: #fff;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    .equipped .equip-btn {
+      background: var(--ww-yellow);
+      color: #000;
+      border-color: #fff;
+      cursor: default;
+    }
+
+    /* Paint Shop Section */
+    .paint-section {
       margin-bottom: 16px;
     }
 
-    .garage-section label {
+    .paint-section label {
       display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      font-style: italic;
+      color: var(--ww-yellow);
+      text-transform: uppercase;
       margin-bottom: 8px;
+      letter-spacing: 0.5px;
     }
 
     .swatches {
@@ -362,10 +698,10 @@
     }
 
     .swatch {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      border: 2px solid rgba(255,255,255,0.25);
       cursor: pointer;
       transition: transform 0.15s, border-color 0.15s;
     }
@@ -376,105 +712,69 @@
     }
 
     .swatch.selected {
-      border-color: #00e5ff;
-      box-shadow: 0 0 10px #00e5ff;
+      border-color: var(--ww-cyan);
+      box-shadow: 0 0 12px var(--ww-cyan);
+      transform: scale(1.1);
     }
   </style>
 </head>
 <body>
   <div id="canvas-container"></div>
+  <div id="speed-lines"></div>
 
   <div id="hud-overlay">
-    <!-- Top Bar Stats & Buttons -->
+    <!-- Top Bar Stats & Action Controls -->
     <div class="top-bar">
-      <div style="display: flex; flex-wrap: wrap;">
-        <div class="stat-badge badge-gold">
-          <span>⭐ Coins:</span>
+      <div class="stats-cluster">
+        <div class="ww-badge badge-yellow">
+          <span>⭐ COINS:</span>
           <span id="coins-value">0</span>
         </div>
-        <div class="stat-badge badge-cyan">
-          <span>🏆 Score:</span>
+        <div class="ww-badge badge-cyan">
+          <span>🏆 SCORE:</span>
           <span id="score-value">0</span>
         </div>
-        <div class="stat-badge">
-          <span>📏 Distance:</span>
+        <div class="ww-badge">
+          <span>📏 DIST:</span>
           <span id="dist-value">0 m</span>
         </div>
-        <div class="stat-badge" style="border-color: rgba(0, 230, 118, 0.4); color: #00e676;">
-          <span>⏱️ Lap:</span>
+        <div class="ww-badge badge-green">
+          <span>⏱️ LAP:</span>
           <span id="lap-time">00:00.0</span>
         </div>
-        <div class="stat-badge" style="border-color: rgba(255, 112, 67, 0.4); color: #ff7043;">
-          <span>🚩 Gate:</span>
+        <div class="ww-badge badge-coral">
+          <span>🚩 GATE:</span>
           <span id="cp-progress">1 / 12</span>
         </div>
-        <div class="stat-badge" style="border-color: rgba(186, 104, 200, 0.4); color: #ba68c8;">
-          <span>⚡ Best:</span>
+        <div class="ww-badge" style="border-color: #a855f7; color: #c084fc;">
+          <span>⚡ BEST:</span>
           <span id="best-lap">--:--.-</span>
         </div>
       </div>
 
       <!-- Action buttons -->
-      <div class="interactive" style="display: flex; gap: 8px;">
-        <button id="garage-btn" class="action-btn" title="Paint Shop (G)">🎨 Garage</button>
-        <button id="weather-btn" class="action-btn" title="Toggle Weather (T)">🌧️ Weather</button>
-        <button id="bell-btn" class="action-btn" title="Ring Bell (B)">🔔 Bell</button>
-        <button id="cam-btn" class="action-btn" title="Switch Camera (C)">🎥 <span id="camera-label">Chase</span></button>
-        <button id="night-btn" class="action-btn" title="Toggle Day/Night (N)">🌙 Night</button>
-        <button id="sound-btn" class="action-btn" title="Toggle Sound">🔊 Sound</button>
-        <button id="reset-btn" class="action-btn" title="Respawn Bike (R)">🔄 Reset</button>
-      </div>
-    </div>
-
-    <!-- Bike Customization Garage Modal -->
-    <div id="garage-modal" class="hidden interactive">
-      <div class="garage-header">
-        <h3>🎨 Bike Customization Shop</h3>
-        <button id="garage-close" class="close-btn">&times;</button>
-      </div>
-      <div class="garage-section">
-        <label>Frame Paint:</label>
-        <div class="swatches" id="frame-swatches">
-          <button class="swatch selected" data-type="frame" data-color="#00e5ff" style="background: #00e5ff;" title="Neon Cyan"></button>
-          <button class="swatch" data-type="frame" data-color="#ff1744" style="background: #ff1744;" title="Lava Red"></button>
-          <button class="swatch" data-type="frame" data-color="#76ff03" style="background: #76ff03;" title="Acid Green"></button>
-          <button class="swatch" data-type="frame" data-color="#ffd600" style="background: #ffd600;" title="Cyber Gold"></button>
-          <button class="swatch" data-type="frame" data-color="#212121" style="background: #212121;" title="Stealth Onyx"></button>
-          <button class="swatch" data-type="frame" data-color="#d500f9" style="background: #d500f9;" title="Electric Violet"></button>
-        </div>
-      </div>
-      <div class="garage-section">
-        <label>Helmet Color:</label>
-        <div class="swatches" id="helmet-swatches">
-          <button class="swatch selected" data-type="helmet" data-color="#ffea00" style="background: #ffea00;" title="Solar Yellow"></button>
-          <button class="swatch" data-type="helmet" data-color="#00e5ff" style="background: #00e5ff;" title="Electric Cyan"></button>
-          <button class="swatch" data-type="helmet" data-color="#ff3d00" style="background: #ff3d00;" title="Blaze Orange"></button>
-          <button class="swatch" data-type="helmet" data-color="#ffffff" style="background: #ffffff;" title="Pure White"></button>
-          <button class="swatch" data-type="helmet" data-color="#212121" style="background: #212121;" title="Matte Black"></button>
-        </div>
-      </div>
-      <div class="garage-section">
-        <label>Rider Jersey:</label>
-        <div class="swatches" id="jersey-swatches">
-          <button class="swatch selected" data-type="jersey" data-color="#2979ff" style="background: #2979ff;" title="Royal Blue"></button>
-          <button class="swatch" data-type="jersey" data-color="#00e676" style="background: #00e676;" title="Emerald Green"></button>
-          <button class="swatch" data-type="jersey" data-color="#ff5252" style="background: #ff5252;" title="Crimson"></button>
-          <button class="swatch" data-type="jersey" data-color="#ffab00" style="background: #ffab00;" title="Amber"></button>
-          <button class="swatch" data-type="jersey" data-color="#37474f" style="background: #37474f;" title="Slate"></button>
-        </div>
+      <div class="interactive action-bar">
+        <button id="garage-btn" class="ww-btn ww-btn-highlight" title="Frankenstein Bike Shop (G)">🛠️ BIKE SHOP</button>
+        <button id="weather-btn" class="ww-btn" title="Toggle Weather (T)">🌧️ WEATHER</button>
+        <button id="bell-btn" class="ww-btn" title="Ring Bicycle Bell (B)">🔔 BELL</button>
+        <button id="cam-btn" class="ww-btn" title="Switch Camera (C)">🎥 <span id="camera-label">CHASE</span></button>
+        <button id="night-btn" class="ww-btn" title="Toggle Day/Night (N)">🌙 NIGHT</button>
+        <button id="sound-btn" class="ww-btn" title="Toggle Audio Mute">🔊 SOUND</button>
+        <button id="reset-btn" class="ww-btn" title="Respawn Bicycle (R)">🔄 RESET</button>
       </div>
     </div>
 
     <!-- Minimap -->
     <div class="minimap-container">
-      <canvas id="minimap-canvas" width="130" height="130"></canvas>
+      <canvas id="minimap-canvas" width="124" height="124"></canvas>
     </div>
 
-    <!-- Trick Announcement Popup -->
+    <!-- Stunt Trick Announcement Popup -->
     <div id="trick-popup" class="hidden">BIG AIR!</div>
 
-    <!-- Speedometer -->
+    <!-- Wheel World Arcade Speedometer -->
     <div class="speedometer">
+      <div class="speed-header">VELOCITY</div>
       <div id="speed-value" class="speed-number">0</div>
       <div class="speed-unit">KM / H</div>
       <div class="speed-track">
@@ -482,20 +782,21 @@
       </div>
     </div>
 
-    <!-- Keyboard Controls Guide -->
+    <!-- Controls Guide Bottom Left -->
     <div class="controls-hint">
-      <h4>🚴 Controls</h4>
+      <h4>🚴 RIDE CONTROLS</h4>
       <div class="key-row"><span>Ride / Accelerate</span><span class="kbd">W / ↑</span></div>
       <div class="key-row"><span>Steer Left / Right</span><span class="kbd">A / D / ← →</span></div>
       <div class="key-row"><span>Brake / Reverse</span><span class="kbd">S / ↓</span></div>
       <div class="key-row"><span>Bunny Hop (Jump)</span><span class="kbd">Space</span></div>
       <div class="key-row"><span>Sprint Boost</span><span class="kbd">Shift</span></div>
-      <div class="key-row"><span>Cycle Camera</span><span class="kbd">C</span></div>
-      <div class="key-row"><span>Ring Bicycle Bell</span><span class="kbd">B</span></div>
+      <div class="key-row"><span>Bike Shop</span><span class="kbd">G</span></div>
+      <div class="key-row"><span>Camera Mode</span><span class="kbd">C</span></div>
+      <div class="key-row"><span>Bicycle Bell</span><span class="kbd">B</span></div>
       <div class="key-row"><span>Reset Position</span><span class="kbd">R</span></div>
     </div>
 
-    <!-- Onscreen Touch Controls for Tablets/Phones -->
+    <!-- Touch Controls for Handheld / Mobile -->
     <div class="touch-controls interactive">
       <button id="btn-left" class="touch-btn">◀</button>
       <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -506,8 +807,77 @@
     </div>
 
     <div class="touch-actions interactive">
-      <button id="btn-jump" class="touch-btn" style="border-color: #ffd700;">🦘</button>
-      <button id="btn-sprint" class="touch-btn" style="border-color: #ff3366;">⚡</button>
+      <button id="btn-jump" class="touch-btn" style="border-color: var(--ww-yellow); color: var(--ww-yellow);">🦘</button>
+      <button id="btn-sprint" class="touch-btn" style="border-color: var(--ww-coral); color: var(--ww-coral);">⚡</button>
+    </div>
+
+    <!-- =============================================
+         WHEEL WORLD FRANKENSTEIN BIKE BUILDER MODAL
+         ============================================= -->
+    <div id="garage-modal" class="hidden interactive">
+      <div class="garage-header">
+        <div class="garage-title">
+          <h3>🛠️ WHEEL WORLD // BIKE CO-OP</h3>
+          <p>Frankenstein Modular Parts Builder • Tune Power, Aero, Handling & Grip</p>
+        </div>
+        <button id="garage-close" class="close-btn" title="Close">&times;</button>
+      </div>
+
+      <!-- 4 Core Attribute Gauges -->
+      <div class="stats-dashboard">
+        <div class="stat-gauge">
+          <div class="stat-label-row">
+            <span>⚡ POWER</span>
+            <span id="stat-val-power" class="stat-val">82</span>
+          </div>
+          <div class="stat-bar-track">
+            <div id="stat-bar-power" class="stat-bar-fill fill-power" style="width: 82%;"></div>
+          </div>
+        </div>
+        <div class="stat-gauge">
+          <div class="stat-label-row">
+            <span>💨 AERO</span>
+            <span id="stat-val-aero" class="stat-val">94</span>
+          </div>
+          <div class="stat-bar-track">
+            <div id="stat-bar-aero" class="stat-bar-fill fill-aero" style="width: 94%;"></div>
+          </div>
+        </div>
+        <div class="stat-gauge">
+          <div class="stat-label-row">
+            <span>🕹️ HANDLING</span>
+            <span id="stat-val-handling" class="stat-val">85</span>
+          </div>
+          <div class="stat-bar-track">
+            <div id="stat-bar-handling" class="stat-bar-fill fill-handling" style="width: 85%;"></div>
+          </div>
+        </div>
+        <div class="stat-gauge">
+          <div class="stat-label-row">
+            <span>🪨 GRIP</span>
+            <span id="stat-val-grip" class="stat-val">74</span>
+          </div>
+          <div class="stat-bar-track">
+            <div id="stat-bar-grip" class="stat-bar-fill fill-grip" style="width: 74%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 Modular Component Categories + Paint Tab -->
+      <div class="category-tabs" id="category-tabs">
+        <button class="cat-tab active" data-slot="frame">FRAME</button>
+        <button class="cat-tab" data-slot="fork">FORK</button>
+        <button class="cat-tab" data-slot="wheels">WHEELS</button>
+        <button class="cat-tab" data-slot="bars">BARS</button>
+        <button class="cat-tab" data-slot="drivetrain">TRAIN</button>
+        <button class="cat-tab" data-slot="saddle">SADDLE</button>
+        <button class="cat-tab" data-slot="paint">🎨 PAINT</button>
+      </div>
+
+      <!-- Active Category Parts / Swatches Container -->
+      <div class="garage-content" id="garage-parts-container">
+        <!-- Dynamically rendered by hud.js / main.js -->
+      </div>
     </div>
   </div>
 

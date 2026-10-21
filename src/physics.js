@@ -34,6 +34,22 @@ export class BikePhysics {
     this.jumpForce = 7.5;
   }
 
+  applyBikeStats(stats) {
+    if (!stats) return;
+    const p = (stats.power || 80) / 100;
+    const a = (stats.aero || 80) / 100;
+    const h = (stats.handling || 80) / 100;
+    const g = (stats.grip || 80) / 100;
+
+    this.acceleration = 10.0 + p * 5.0;
+    this.sprintMultiplier = 1.4 + p * 0.4;
+    this.maxSpeed = 12.0 + a * 5.5;
+    this.airDrag = Math.max(0.02, 0.048 - a * 0.016);
+    this.turnSpeed = 1.5 + h * 0.8;
+    this.brakeDecel = 18.0 + g * 10.0;
+    this.friction = Math.max(1.2, 2.2 - g * 0.5);
+  }
+
   update(inputs, dt) {
     // 1. Current planar speed
     const forwardVector = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading));
