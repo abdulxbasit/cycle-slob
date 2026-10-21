@@ -35,7 +35,7 @@
     "id": "TASK-005",
     "title": "Village and Environment Expansion",
     "description": "Add low-poly cottages, wooden fences, street benches, and a tunnel through the northern hill.",
-    "status": "pending",
+    "status": "completed",
     "targetFiles": ["src/world.js"],
     "priority": 5
   },

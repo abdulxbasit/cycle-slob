@@ -18,6 +18,7 @@ export class GameWorld {
     this.createCollectibles();
     this.createCheckpoints();
     this.createBoostPads();
+    this.createVillageAndTunnel();
   }
 
   // Smooth undulating procedural landscape height formula
@@ -607,5 +608,147 @@ export class GameWorld {
       }
     }
     return false;
+  }
+
+  createVillageAndTunnel() {
+    // 1. Village Cottages
+    const houses = [
+      { x: 45, z: 80, rot: 0.25, wall: 0xfff8e1, roof: 0xb71c1c },
+      { x: 72, z: 75, rot: -0.3, wall: 0xede7f6, roof: 0x37474f },
+      { x: 96, z: 95, rot: 0.6, wall: 0xe0f2f1, roof: 0xd84315 },
+      { x: 38, z: 110, rot: -0.45, wall: 0xfff3e0, roof: 0x4e342e },
+      { x: 68, z: 130, rot: 0.8, wall: 0xfbe9e7, roof: 0x1565c0 },
+    ];
+
+    const windowMat = new THREE.MeshStandardMaterial({
+      color: 0xffeb3b,
+      emissive: 0xffd54f,
+      emissiveIntensity: 0.9,
+    });
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.8 });
+
+    houses.forEach(cfg => {
+      const groundY = this.getTerrainHeight(cfg.x, cfg.z);
+      const houseGroup = new THREE.Group();
+      houseGroup.position.set(cfg.x, groundY, cfg.z);
+      houseGroup.rotation.y = cfg.rot;
+
+      // Walls
+      const wallMat = new THREE.MeshStandardMaterial({ color: cfg.wall, roughness: 0.85 });
+      const wallMesh = new THREE.Mesh(new THREE.BoxGeometry(6.5, 4.0, 5.5), wallMat);
+      wallMesh.position.y = 2.0;
+      wallMesh.castShadow = true;
+      wallMesh.receiveShadow = true;
+      houseGroup.add(wallMesh);
+
+      // Roof (triangular prism / cone)
+      const roofMat = new THREE.MeshStandardMaterial({ color: cfg.roof, roughness: 0.7 });
+      const roofMesh = new THREE.Mesh(new THREE.ConeGeometry(5.2, 2.5, 4), roofMat);
+      roofMesh.position.y = 5.25;
+      roofMesh.rotation.y = Math.PI / 4;
+      roofMesh.castShadow = true;
+      houseGroup.add(roofMesh);
+
+      // Chimney
+      const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.7), new THREE.MeshStandardMaterial({ color: 0x795548 }));
+      chimney.position.set(1.5, 5.5, 0.8);
+      chimney.castShadow = true;
+      houseGroup.add(chimney);
+
+      // Door
+      const door = new THREE.Mesh(new THREE.BoxGeometry(1.2, 2.2, 0.1), doorMat);
+      door.position.set(0, 1.1, 2.76);
+      houseGroup.add(door);
+
+      // Windows
+      const winGeo = new THREE.BoxGeometry(1.0, 1.0, 0.08);
+      const winL = new THREE.Mesh(winGeo, windowMat);
+      winL.position.set(-1.8, 2.2, 2.76);
+      const winR = new THREE.Mesh(winGeo, windowMat);
+      winR.position.set(1.8, 2.2, 2.76);
+      houseGroup.add(winL, winR);
+
+      this.scene.add(houseGroup);
+    });
+
+    // 2. Wooden Fences along village curve
+    const fenceMat = new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.9 });
+    const postGeo = new THREE.CylinderGeometry(0.08, 0.1, 1.3, 6);
+    const railGeo = new THREE.BoxGeometry(2.8, 0.08, 0.06);
+
+    for (let i = 0; i < 14; i++) {
+      const fx = 28 + i * 2.4;
+      const fz = 60 + i * 5.2;
+      const fy = this.getTerrainHeight(fx, fz);
+
+      const post = new THREE.Mesh(postGeo, fenceMat);
+      post.position.set(fx, fy + 0.65, fz);
+      post.castShadow = true;
+      this.scene.add(post);
+
+      if (i < 13) {
+        const nextX = 28 + (i + 1) * 2.4;
+        const nextZ = 60 + (i + 1) * 5.2;
+        const nextY = this.getTerrainHeight(nextX, nextZ);
+
+        const mid = new THREE.Vector3((fx + nextX) / 2, (fy + nextY) / 2 + 0.7, (fz + nextZ) / 2);
+        const rail = new THREE.Mesh(railGeo, fenceMat);
+        rail.position.copy(mid);
+        rail.lookAt(nextX, mid.y, nextZ);
+        this.scene.add(rail);
+      }
+    }
+
+    // 3. Northern Mountain Arch Tunnel at (-40, 0, 340)
+    const tunnelGroup = new THREE.Group();
+    const tX = -40;
+    const tZ = 340;
+    const tY = this.getTerrainHeight(tX, tZ);
+    tunnelGroup.position.set(tX, tY, tZ);
+    tunnelGroup.rotation.y = -0.15;
+
+    const stoneMat = new THREE.MeshStandardMaterial({
+      color: 0x455a64,
+      roughness: 0.9,
+      flatShading: true,
+    });
+
+    // Outer Mountain Arch Structure
+    const tunnelArchGeo = new THREE.CylinderGeometry(8.5, 9.2, 20.0, 16, 1, true, 0, Math.PI);
+    tunnelArchGeo.rotateZ(Math.PI / 2);
+    tunnelArchGeo.rotateY(Math.PI / 2);
+
+    const tunnelMesh = new THREE.Mesh(tunnelArchGeo, stoneMat);
+    tunnelMesh.position.y = 0.5;
+    tunnelMesh.castShadow = true;
+    tunnelMesh.receiveShadow = true;
+    tunnelGroup.add(tunnelMesh);
+
+    // Stone Portal Facades at entrance and exit
+    const portalGeo = new THREE.BoxGeometry(16.0, 9.0, 1.5);
+    const portalFront = new THREE.Mesh(portalGeo, stoneMat);
+    portalFront.position.set(0, 4.5, -10.0);
+    portalFront.castShadow = true;
+    const portalBack = new THREE.Mesh(portalGeo, stoneMat);
+    portalBack.position.set(0, 4.5, 10.0);
+    portalBack.castShadow = true;
+    tunnelGroup.add(portalFront, portalBack);
+
+    // Tunnel Interior Wall Lanterns
+    const lanternMat = new THREE.MeshStandardMaterial({
+      color: 0xffa726,
+      emissive: 0xff9800,
+      emissiveIntensity: 1.8,
+    });
+    const lanternGeo = new THREE.SphereGeometry(0.3, 8, 8);
+    [-5, 5].forEach(zOffset => {
+      const lLeft = new THREE.Mesh(lanternGeo, lanternMat);
+      lLeft.position.set(-5.5, 3.2, zOffset);
+      const lRight = new THREE.Mesh(lanternGeo, lanternMat);
+      lRight.position.set(5.5, 3.2, zOffset);
+      tunnelGroup.add(lLeft, lRight);
+    });
+
+    this.scene.add(tunnelGroup);
   }
 }
