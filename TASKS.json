@@ -1,0 +1,58 @@
+[
+  {
+    "id": "TASK-001",
+    "title": "Air Stunts and Trick Detection Engine",
+    "description": "Implement backflip, frontflip, 360-spin aerial stunts with combo multipliers and animated score callouts.",
+    "status": "completed",
+    "targetFiles": ["src/physics.js", "src/hud.js", "index.html"],
+    "priority": 1
+  },
+  {
+    "id": "TASK-002",
+    "title": "Tire Skid Marks and Drift Dust Particles",
+    "description": "Create dynamic particle dust when braking or turning hard, plus skid mark meshes on the asphalt.",
+    "status": "pending",
+    "targetFiles": ["src/bicycle.js", "src/main.js"],
+    "priority": 2
+  },
+  {
+    "id": "TASK-003",
+    "title": "Time Trial Checkpoint Racing Circuit",
+    "description": "Add neon checkpoint gates along the road circuit, active timer, split times, and best lap record saved to localStorage.",
+    "status": "pending",
+    "targetFiles": ["src/world.js", "src/hud.js", "src/main.js"],
+    "priority": 3
+  },
+  {
+    "id": "TASK-004",
+    "title": "Turbo Boost Pads and Nitro Effect",
+    "description": "Place glowing boost pads on roads that give speed bursts (+50% speed for 2.5s) and camera FOV zoom effect.",
+    "status": "pending",
+    "targetFiles": ["src/world.js", "src/physics.js", "src/main.js"],
+    "priority": 4
+  },
+  {
+    "id": "TASK-005",
+    "title": "Village and Environment Expansion",
+    "description": "Add low-poly cottages, wooden fences, street benches, and a tunnel through the northern hill.",
+    "status": "pending",
+    "targetFiles": ["src/world.js"],
+    "priority": 5
+  },
+  {
+    "id": "TASK-006",
+    "title": "Bike Customization and Paint Shop",
+    "description": "Interactive garage UI to customize bicycle frame colors (Neon Cyan, Lava Red, Acid Green, Cyber Gold) and cyclist helmet styles.",
+    "status": "pending",
+    "targetFiles": ["src/bicycle.js", "index.html", "src/main.js"],
+    "priority": 6
+  },
+  {
+    "id": "TASK-007",
+    "title": "Dynamic Weather and Rain FX",
+    "description": "Add rain particles, darkening storm clouds, wet asphalt shimmer, and thunder audio synthesis.",
+    "status": "pending",
+    "targetFiles": ["src/world.js", "src/audio.js", "src/main.js"],
+    "priority": 7
+  }
+]

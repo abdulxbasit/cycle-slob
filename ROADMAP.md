@@ -20,7 +20,7 @@ On each scheduled run:
 - [x] Procedural bicycle & rider with pedaling animations and leaning
 - [x] Web Audio procedural sound effects (bell, chain, roll, wind, coins)
 - [x] Speedometer, HUD, minimap, day/night mode
-- [ ] Add Mid-Air Stunt Detection (Backflip, Frontflip, 360 Spin) with combo multipliers
+- [x] Add Mid-Air Stunt Detection (Backflip, Frontflip, 360 Spin) with combo multipliers (Completed TASK-001)
 - [ ] Implement Time Trial Checkpoint Circuit with countdown timer and leaderboard record
 - [ ] Add skid marks / tire smoke particle effects when hard braking or drifting
 - [ ] Add Turbo Boost pads on roads that give speed bursts when ridden over

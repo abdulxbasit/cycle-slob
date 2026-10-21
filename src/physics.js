@@ -13,8 +13,12 @@ export class BikePhysics {
     this.airTime = 0;
     this.stuntScore = 0;
     this.trickName = '';
+    this.comboMultiplier = 1;
+    this.lastTrickTime = 0;
     this.pitchAngle = 0;
     this.rollAngle = 0;
+    this.accumulatedPitch = 0;
+    this.accumulatedRoll = 0;
     this.totalDistance = 0;
 
     // Config
@@ -119,10 +123,17 @@ export class BikePhysics {
       this.position.y += this.verticalVelocity * dt;
 
       // In-air trick rotation if holding keys
-      if (inputs.forward) this.pitchAngle += dt * 3.5;
-      if (inputs.backward) this.pitchAngle -= dt * 3.5;
-      if (inputs.left) this.rollAngle -= dt * 4.0;
-      if (inputs.right) this.rollAngle += dt * 4.0;
+      let pitchDelta = 0;
+      let rollDelta = 0;
+      if (inputs.forward) pitchDelta += dt * 4.5;
+      if (inputs.backward) pitchDelta -= dt * 4.5;
+      if (inputs.left) rollDelta -= dt * 5.0;
+      if (inputs.right) rollDelta += dt * 5.0;
+
+      this.pitchAngle += pitchDelta;
+      this.rollAngle += rollDelta;
+      this.accumulatedPitch += pitchDelta;
+      this.accumulatedRoll += rollDelta;
 
       // Touchdown / landing check
       if (this.position.y <= bikeRestY) {
@@ -130,27 +141,61 @@ export class BikePhysics {
         this.verticalVelocity = 0;
         this.isGrounded = true;
 
-        // Score stunts based on airtime
-        let points = 0;
-        let trick = '';
-        if (this.airTime > 1.4) {
-          points = Math.round(this.airTime * 250);
-          trick = 'INSANE AIR!';
-        } else if (this.airTime > 0.8) {
-          points = Math.round(this.airTime * 150);
-          trick = 'BIG AIR!';
-        } else if (this.airTime > 0.4) {
-          points = 50;
-          trick = 'HOP!';
+        // Detect tricks based on rotation & airtime
+        let basePoints = 0;
+        const tricks = [];
+
+        // Flips
+        if (this.accumulatedPitch <= -5.5) {
+          tricks.push('BACKFLIP');
+          basePoints += 450;
+        } else if (this.accumulatedPitch >= 5.5) {
+          tricks.push('FRONTFLIP');
+          basePoints += 400;
         }
 
-        if (points > 0) {
-          this.stuntScore += points;
-          this.trickName = `${trick} +${points}`;
+        // Spins
+        if (Math.abs(this.accumulatedRoll) >= 10.0) {
+          tricks.push('720° SPIN');
+          basePoints += 600;
+        } else if (Math.abs(this.accumulatedRoll) >= 5.0) {
+          tricks.push('360° SPIN');
+          basePoints += 300;
+        }
+
+        // Airtime points
+        if (this.airTime > 1.3) {
+          tricks.push('INSANE AIR');
+          basePoints += 250;
+        } else if (this.airTime > 0.7) {
+          tricks.push('BIG AIR');
+          basePoints += 120;
+        } else if (this.airTime > 0.35 && tricks.length === 0) {
+          tricks.push('BUNNY HOP');
+          basePoints += 50;
+        }
+
+        if (tricks.length > 0) {
+          // Chain combo multiplier if landed within 4 seconds of last trick
+          const now = performance.now();
+          if (now - this.lastTrickTime < 4000) {
+            this.comboMultiplier = Math.min(5, this.comboMultiplier + 1);
+          } else {
+            this.comboMultiplier = 1;
+          }
+          this.lastTrickTime = now;
+
+          const totalPoints = basePoints * this.comboMultiplier;
+          this.stuntScore += totalPoints;
+
+          const comboTag = this.comboMultiplier > 1 ? ` [${this.comboMultiplier}x COMBO!]` : '';
+          this.trickName = `${tricks.join(' + ')}${comboTag} +${totalPoints}`;
         }
 
         this.pitchAngle = 0;
         this.rollAngle = 0;
+        this.accumulatedPitch = 0;
+        this.accumulatedRoll = 0;
         this.airTime = 0;
       }
     } else {
@@ -181,6 +226,7 @@ export class BikePhysics {
       airTime: this.airTime,
       stuntScore: this.stuntScore,
       trickName: this.trickName,
+      comboMultiplier: this.comboMultiplier,
       totalDistance: this.totalDistance
     };
   }

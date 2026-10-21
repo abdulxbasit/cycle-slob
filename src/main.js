@@ -272,7 +272,10 @@ class Game {
 
     // 2. Sync Bicycle 3D Mesh
     this.bicycle.root.position.copy(this.physics.position);
+    this.bicycle.root.rotation.order = 'YXZ';
     this.bicycle.root.rotation.y = this.physics.heading;
+    this.bicycle.root.rotation.x = this.physics.pitchAngle;
+    this.bicycle.root.rotation.z = this.physics.rollAngle;
     this.bicycle.update(this.physics.velocity, physicsData.steerInput, physicsData.leanAngle, dt);
 
     // 3. Update Audio
