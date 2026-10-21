@@ -27,7 +27,7 @@
     "id": "TASK-004",
     "title": "Turbo Boost Pads and Nitro Effect",
     "description": "Place glowing boost pads on roads that give speed bursts (+50% speed for 2.5s) and camera FOV zoom effect.",
-    "status": "pending",
+    "status": "completed",
     "targetFiles": ["src/world.js", "src/physics.js", "src/main.js"],
     "priority": 4
   },

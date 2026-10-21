@@ -23,7 +23,7 @@ On each scheduled run:
 - [x] Add Mid-Air Stunt Detection (Backflip, Frontflip, 360 Spin) with combo multipliers (Completed TASK-001)
 - [x] Add skid marks / tire smoke particle effects when hard braking or drifting (Completed TASK-002)
 - [x] Implement Time Trial Checkpoint Circuit with countdown timer and leaderboard record (Completed TASK-003)
-- [ ] Add Turbo Boost pads on roads that give speed bursts when ridden over
+- [x] Add Turbo Boost pads on roads that give speed bursts when ridden over (Completed TASK-004)
 
 ### Phase 2: World & Environment
 - [ ] Add more terrain props: bridges across ravines, fences, tunnels, and low-poly houses/village

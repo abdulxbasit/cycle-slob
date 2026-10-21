@@ -20,6 +20,7 @@ export class BikePhysics {
     this.accumulatedPitch = 0;
     this.accumulatedRoll = 0;
     this.totalDistance = 0;
+    this.boostTimer = 0;
 
     // Config
     this.acceleration = 12.0;       // m/s^2
@@ -64,8 +65,15 @@ export class BikePhysics {
       const drag = (this.friction * Math.sign(forwardSpeed)) + (this.airDrag * forwardSpeed * Math.abs(forwardSpeed));
       forwardSpeed += (targetAcc - drag) * dt;
 
+      // Turbo Boost handling
+      if (this.boostTimer > 0) {
+        this.boostTimer -= dt;
+        targetAcc += 24.0;
+      }
+
       // Check max speeds
-      const topSpeedLimit = inputs.sprint ? this.maxSpeed * 1.5 : this.maxSpeed;
+      let topSpeedLimit = inputs.sprint ? this.maxSpeed * 1.5 : this.maxSpeed;
+      if (this.boostTimer > 0) topSpeedLimit = 23.5;
       if (forwardSpeed > topSpeedLimit) {
         forwardSpeed = THREE.MathUtils.lerp(forwardSpeed, topSpeedLimit, dt * 2);
       }
@@ -237,8 +245,20 @@ export class BikePhysics {
       stuntScore: this.stuntScore,
       trickName: this.trickName,
       comboMultiplier: this.comboMultiplier,
+      isBoosting: this.boostTimer > 0,
       totalDistance: this.totalDistance
     };
+  }
+
+  applyTurboBoost() {
+    this.boostTimer = 2.5;
+    const forwardVector = new THREE.Vector3(Math.sin(this.heading), 0, Math.cos(this.heading));
+    const currentSpeed = Math.max(0, this.velocity.dot(forwardVector));
+    const boostSpeed = Math.max(currentSpeed + 7.0, 18.0);
+    this.velocity.x = Math.sin(this.heading) * boostSpeed;
+    this.velocity.z = Math.cos(this.heading) * boostSpeed;
+    this.stuntScore += 250;
+    this.trickName = '🚀 NITRO BOOST! +250';
   }
 
   reset() {

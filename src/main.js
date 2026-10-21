@@ -225,7 +225,11 @@ class Game {
     });
   }
 
-  updateCamera() {
+  updateCamera(dt, isBoosting) {
+    const targetFov = isBoosting ? 78 : 65;
+    this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, (dt || 0.016) * 5);
+    this.camera.updateProjectionMatrix();
+
     const mode = this.cameraModes[this.cameraIndex];
     const pos = this.physics.position;
     const heading = this.physics.heading;
@@ -332,6 +336,13 @@ class Game {
       sound.playCoin();
     });
 
+    // Check Turbo Boost Pads
+    if (this.world.checkBoostPads(this.physics.position)) {
+      this.physics.applyTurboBoost();
+      sound.playBoost();
+    }
+    this.world.updateBoostPads(elapsedTime);
+
     // 5. Directional Light follow player for continuous dynamic shadows
     this.dirLight.position.set(
       this.physics.position.x + 80,
@@ -341,7 +352,7 @@ class Game {
     this.dirLight.target.position.copy(this.physics.position);
 
     // 6. Camera & HUD
-    this.updateCamera();
+    this.updateCamera(dt, physicsData.isBoosting);
     this.hud.update(
       physicsData,
       this.coinsCollected,

@@ -7,6 +7,7 @@ export class GameWorld {
     this.coins = [];
     this.ramps = [];
     this.checkpoints = [];
+    this.boostPads = [];
     this.colliders = [];
 
     this.createTerrain();
@@ -16,6 +17,7 @@ export class GameWorld {
     this.createLightingAndDecorations();
     this.createCollectibles();
     this.createCheckpoints();
+    this.createBoostPads();
   }
 
   // Smooth undulating procedural landscape height formula
@@ -526,5 +528,84 @@ export class GameWorld {
     if (!cp) return false;
     const dist = Math.hypot(playerPos.x - cp.pos.x, playerPos.z - cp.pos.z);
     return dist < 6.5;
+  }
+
+  createBoostPads() {
+    const padLocations = [
+      { x: 30, z: 15, rotY: 0.5 },
+      { x: 130, z: 160, rotY: 1.4 },
+      { x: 20, z: 335, rotY: -1.6 },
+      { x: -200, z: 20, rotY: -2.8 },
+      { x: -120, z: -130, rotY: -0.4 },
+    ];
+
+    const padBaseGeo = new THREE.BoxGeometry(6.0, 0.08, 10.0);
+    const padBaseMat = new THREE.MeshStandardMaterial({
+      color: 0x1a1a24,
+      metalness: 0.8,
+      roughness: 0.3,
+    });
+
+    const chevronGeo = new THREE.BoxGeometry(4.8, 0.12, 1.2);
+
+    padLocations.forEach((loc, idx) => {
+      const groundY = this.getTerrainHeight(loc.x, loc.z);
+      const group = new THREE.Group();
+      group.position.set(loc.x, groundY + 0.04, loc.z);
+      group.rotation.y = loc.rotY;
+
+      // Base plate
+      const base = new THREE.Mesh(padBaseGeo, padBaseMat);
+      base.receiveShadow = true;
+      group.add(base);
+
+      // 3 Chevrons
+      const chevrons = [];
+      const zOffsets = [-3.0, 0.0, 3.0];
+      zOffsets.forEach((zo, cIdx) => {
+        const cMat = new THREE.MeshStandardMaterial({
+          color: 0xff3d00,
+          emissive: 0xff3d00,
+          emissiveIntensity: 1.2,
+          roughness: 0.2,
+        });
+        const chev = new THREE.Mesh(chevronGeo, cMat);
+        chev.position.set(0, 0.06, zo);
+        group.add(chev);
+        chevrons.push({ mesh: chev, mat: cMat, offset: cIdx });
+      });
+
+      this.boostPads.push({
+        id: idx,
+        pos: new THREE.Vector3(loc.x, groundY, loc.z),
+        group,
+        chevrons,
+        lastTriggered: 0,
+      });
+
+      this.scene.add(group);
+    });
+  }
+
+  updateBoostPads(time) {
+    this.boostPads.forEach(pad => {
+      pad.chevrons.forEach(c => {
+        const pulse = 0.8 + Math.sin(time * 12 + c.offset * 1.5) * 0.7;
+        c.mat.emissiveIntensity = Math.max(0.4, pulse * 1.8);
+      });
+    });
+  }
+
+  checkBoostPads(playerPos) {
+    const now = performance.now();
+    for (const pad of this.boostPads) {
+      if (now - pad.lastTriggered < 3000) continue; // Cooldown per pad
+      const dist = Math.hypot(playerPos.x - pad.pos.x, playerPos.z - pad.pos.z);
+      if (dist < 4.0) {
+        pad.lastTriggered = now;
+        return true;
+      }
+    }
+    return false;
   }
 }
