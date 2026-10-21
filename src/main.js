@@ -19,13 +19,12 @@ class Game {
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
-      powerPreference: 'high-performance',
-      preserveDrawingBuffer: true
+      powerPreference: 'high-performance'
     });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.container.appendChild(this.renderer.domElement);
 
     // Camera
@@ -67,10 +66,9 @@ class Game {
     this.setupUI();
     this.setupWindowResize();
 
-    // Start Loop
+    // Start Game Loop
     this.animate = this.animate.bind(this);
-    this.animate(); // Render immediately!
-    this.renderer.setAnimationLoop(this.animate);
+    requestAnimationFrame(this.animate);
   }
 
   setupLighting() {
@@ -80,11 +78,11 @@ class Game {
     this.dirLight = new THREE.DirectionalLight(0xfff8e7, 1.3);
     this.dirLight.position.set(120, 200, 100);
     this.dirLight.castShadow = true;
-    this.dirLight.shadow.mapSize.width = 2048;
-    this.dirLight.shadow.mapSize.height = 2048;
+    this.dirLight.shadow.mapSize.width = 1024;
+    this.dirLight.shadow.mapSize.height = 1024;
     this.dirLight.shadow.camera.near = 10;
-    this.dirLight.shadow.camera.far = 450;
-    const d = 60;
+    this.dirLight.shadow.camera.far = 350;
+    const d = 36;
     this.dirLight.shadow.camera.left = -d;
     this.dirLight.shadow.camera.right = d;
     this.dirLight.shadow.camera.top = d;

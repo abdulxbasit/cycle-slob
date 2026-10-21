@@ -57,7 +57,7 @@ export class GameWorld {
   }
 
   createTerrain() {
-    const geo = new THREE.PlaneGeometry(this.mapSize, this.mapSize, 180, 180);
+    const geo = new THREE.PlaneGeometry(this.mapSize, this.mapSize, 100, 100);
     geo.rotateX(-Math.PI / 2);
 
     const pos = geo.attributes.position;
@@ -289,13 +289,28 @@ export class GameWorld {
     const foliageMat3 = new THREE.MeshStandardMaterial({ color: 0x66bb6a, roughness: 0.8, flatShading: true });
     const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 });
 
-    // Rock geometry
     const rockGeo = new THREE.DodecahedronGeometry(1.5, 0);
     const rockMat = new THREE.MeshStandardMaterial({ color: 0x78909c, roughness: 0.85, flatShading: true });
 
-    // Instanced meshes for great performance
-    const treeCount = 220;
-    const rockCount = 60;
+    const treeCount = 180;
+    const pineCount = Math.ceil(treeCount / 2);
+    const oakCount = Math.floor(treeCount / 2);
+    const rockCount = 50;
+
+    const trunkMesh = new THREE.InstancedMesh(trunkGeo, trunkMat, treeCount);
+    const pine1Mesh = new THREE.InstancedMesh(treeGeoCone, foliageMat1, pineCount);
+    const pine2Mesh = new THREE.InstancedMesh(treeGeoCone, foliageMat2, pineCount);
+    const oakMesh = new THREE.InstancedMesh(treeGeoOak, foliageMat3, oakCount);
+    const rockMesh = new THREE.InstancedMesh(rockGeo, rockMat, rockCount);
+
+    trunkMesh.castShadow = true;
+    pine1Mesh.castShadow = true;
+    oakMesh.castShadow = true;
+    rockMesh.castShadow = true;
+
+    const dummy = new THREE.Object3D();
+    let pineIdx = 0;
+    let oakIdx = 0;
 
     for (let i = 0; i < treeCount; i++) {
       const radius = 35 + Math.random() * 450;
@@ -303,39 +318,34 @@ export class GameWorld {
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       const y = this.getTerrainHeight(x, z);
+      const s = 0.7 + Math.random() * 0.6;
+      const rotY = Math.random() * Math.PI * 2;
 
-      const tree = new THREE.Group();
-      tree.position.set(x, y, z);
-
-      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-      trunk.position.y = 1.25;
-      trunk.castShadow = true;
-      tree.add(trunk);
+      // Trunk
+      dummy.position.set(x, y + 1.25 * s, z);
+      dummy.rotation.set(0, rotY, 0);
+      dummy.scale.set(s, s, s);
+      dummy.updateMatrix();
+      trunkMesh.setMatrixAt(i, dummy.matrix);
 
       const isPine = (i % 2 === 0);
-      if (isPine) {
-        const fol1 = new THREE.Mesh(treeGeoCone, foliageMat1);
-        fol1.position.y = 3.6;
-        fol1.castShadow = true;
-        tree.add(fol1);
+      if (isPine && pineIdx < pineCount) {
+        dummy.position.set(x, y + 3.6 * s, z);
+        dummy.updateMatrix();
+        pine1Mesh.setMatrixAt(pineIdx, dummy.matrix);
 
-        const fol2 = new THREE.Mesh(treeGeoCone, foliageMat2);
-        fol2.scale.set(0.75, 0.75, 0.75);
-        fol2.position.y = 5.2;
-        fol2.castShadow = true;
-        tree.add(fol2);
-      } else {
-        const oak = new THREE.Mesh(treeGeoOak, foliageMat3);
-        oak.position.y = 3.8;
-        oak.scale.set(1, 1.2, 1);
-        oak.castShadow = true;
-        tree.add(oak);
+        dummy.position.set(x, y + 5.2 * s, z);
+        dummy.scale.set(s * 0.75, s * 0.75, s * 0.75);
+        dummy.updateMatrix();
+        pine2Mesh.setMatrixAt(pineIdx, dummy.matrix);
+        pineIdx++;
+      } else if (oakIdx < oakCount) {
+        dummy.position.set(x, y + 3.8 * s, z);
+        dummy.scale.set(s, s * 1.2, s);
+        dummy.updateMatrix();
+        oakMesh.setMatrixAt(oakIdx, dummy.matrix);
+        oakIdx++;
       }
-
-      const s = 0.7 + Math.random() * 0.6;
-      tree.scale.set(s, s, s);
-      tree.rotation.y = Math.random() * Math.PI * 2;
-      this.scene.add(tree);
     }
 
     // Rocks
@@ -345,15 +355,22 @@ export class GameWorld {
       const x = Math.cos(angle) * radius;
       const z = Math.sin(angle) * radius;
       const y = this.getTerrainHeight(x, z);
-
-      const rock = new THREE.Mesh(rockGeo, rockMat);
-      rock.position.set(x, y + 0.5, z);
       const s = 0.6 + Math.random() * 1.5;
-      rock.scale.set(s * (0.8 + Math.random() * 0.4), s * 0.7, s * (0.8 + Math.random() * 0.4));
-      rock.rotation.set(Math.random(), Math.random(), Math.random());
-      rock.castShadow = true;
-      this.scene.add(rock);
+
+      dummy.position.set(x, y + 0.5 * s, z);
+      dummy.rotation.set(Math.random(), Math.random(), Math.random());
+      dummy.scale.set(s * (0.8 + Math.random() * 0.4), s * 0.7, s * (0.8 + Math.random() * 0.4));
+      dummy.updateMatrix();
+      rockMesh.setMatrixAt(i, dummy.matrix);
     }
+
+    trunkMesh.instanceMatrix.needsUpdate = true;
+    pine1Mesh.instanceMatrix.needsUpdate = true;
+    pine2Mesh.instanceMatrix.needsUpdate = true;
+    oakMesh.instanceMatrix.needsUpdate = true;
+    rockMesh.instanceMatrix.needsUpdate = true;
+
+    this.scene.add(trunkMesh, pine1Mesh, pine2Mesh, oakMesh, rockMesh);
   }
 
   createLightingAndDecorations() {
