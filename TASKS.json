@@ -11,7 +11,7 @@
     "id": "TASK-002",
     "title": "Tire Skid Marks and Drift Dust Particles",
     "description": "Create dynamic particle dust when braking or turning hard, plus skid mark meshes on the asphalt.",
-    "status": "pending",
+    "status": "completed",
     "targetFiles": ["src/bicycle.js", "src/main.js"],
     "priority": 2
   },

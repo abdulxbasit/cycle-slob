@@ -318,6 +318,11 @@ export class Bicycle {
     }
   }
 
+  getRearWheelContactPosition() {
+    const rearLocal = new THREE.Vector3(-this.wheelbase * 0.52, 0, 0);
+    return this.root.localToWorld(rearLocal);
+  }
+
   setLightIntensity(intensity) {
     this.spotLight.intensity = intensity;
   }

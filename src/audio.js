@@ -74,9 +74,27 @@ class SoundController {
     this.windFilter.connect(this.windGain);
     this.windGain.connect(this.ctx.destination);
     windSource.start(0);
+
+    // 3. Tire screech / skid friction noise
+    const skidSource = this.ctx.createBufferSource();
+    skidSource.buffer = noiseBuffer;
+    skidSource.loop = true;
+
+    this.skidFilter = this.ctx.createBiquadFilter();
+    this.skidFilter.type = 'bandpass';
+    this.skidFilter.frequency.value = 1600;
+    this.skidFilter.Q.value = 4.0;
+
+    this.skidGain = this.ctx.createGain();
+    this.skidGain.gain.value = 0;
+
+    skidSource.connect(this.skidFilter);
+    this.skidFilter.connect(this.skidGain);
+    this.skidGain.connect(this.ctx.destination);
+    skidSource.start(0);
   }
 
-  update(speed, isGrounded, isPedaling) {
+  update(speed, isGrounded, isPedaling, isSkidding = false) {
     if (!this.initialized || this.muted || !this.ctx) return;
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
@@ -104,6 +122,17 @@ class SoundController {
         this.windFilter.frequency.setTargetAtTime(350 + absSpeed * 20, now, 0.1);
       } else {
         this.windGain.gain.setTargetAtTime(0, now, 0.1);
+      }
+    }
+
+    // Tire Skid Screech
+    if (this.skidGain && this.skidFilter) {
+      if (isGrounded && isSkidding && absSpeed > 1.5) {
+        const skidVol = Math.min(0.35, 0.15 + (absSpeed / 30) * 0.2);
+        this.skidGain.gain.setTargetAtTime(skidVol, now, 0.04);
+        this.skidFilter.frequency.setTargetAtTime(1400 + Math.random() * 400, now, 0.04);
+      } else {
+        this.skidGain.gain.setTargetAtTime(0, now, 0.06);
       }
     }
 

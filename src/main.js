@@ -4,6 +4,7 @@ import { GameWorld } from './world.js';
 import { BikePhysics } from './physics.js';
 import { sound } from './audio.js';
 import { HUD } from './hud.js';
+import { ParticleAndSkidSystem } from './particles.js';
 
 class Game {
   constructor() {
@@ -31,6 +32,7 @@ class Game {
     this.world = new GameWorld(this.scene);
     this.bicycle = new Bicycle(this.scene);
     this.physics = new BikePhysics(this.world);
+    this.particles = new ParticleAndSkidSystem(this.scene, this.world);
     this.hud = new HUD();
 
     this.coinsCollected = 0;
@@ -278,8 +280,12 @@ class Game {
     this.bicycle.root.rotation.z = this.physics.rollAngle;
     this.bicycle.update(this.physics.velocity, physicsData.steerInput, physicsData.leanAngle, dt);
 
+    // Update Tire Skid & Dust Particles
+    const rearWheelPos = this.bicycle.getRearWheelContactPosition();
+    this.particles.update(dt, rearWheelPos, this.physics.velocity, physicsData.isSkidding, physicsData.isGrounded);
+
     // 3. Update Audio
-    sound.update(physicsData.forwardSpeed, physicsData.isGrounded, physicsData.isPedaling);
+    sound.update(physicsData.forwardSpeed, physicsData.isGrounded, physicsData.isPedaling, physicsData.isSkidding);
 
     // 4. Update World (Coin animations)
     this.world.update(elapsedTime);

@@ -85,6 +85,15 @@ export class BikePhysics {
     if (inputs.left) steerInput += 1;
     if (inputs.right) steerInput -= 1;
 
+    // Detect hard braking skid or high-speed drift
+    const isHardBraking = inputs.backward && forwardSpeed > 2.0;
+    const isDrifting = Math.abs(steerInput) > 0.55 && forwardSpeed > 5.5;
+    const isSkidding = this.isGrounded && (isHardBraking || isDrifting);
+
+    if (isDrifting) {
+      this.stuntScore += Math.round(dt * 75 * this.comboMultiplier);
+    }
+
     let leanAngle = 0;
     if (Math.abs(forwardSpeed) > 0.2) {
       // Speed-dependent turn rate (tighter at moderate speed, stable at high speed)
@@ -222,6 +231,7 @@ export class BikePhysics {
       steerInput,
       leanAngle,
       isGrounded: this.isGrounded,
+      isSkidding,
       isPedaling,
       airTime: this.airTime,
       stuntScore: this.stuntScore,
